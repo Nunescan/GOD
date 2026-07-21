@@ -10,6 +10,7 @@ const { requireAuth } = require('./middleware/auth');
 const launcherRoutes = require('./routes/launcher');
 const authRoutes = require('./routes/auth');
 const settingsRoutes = require('./routes/settings');
+const cteRoutes = require('./routes/cte');
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '4173', 10);
@@ -141,6 +142,7 @@ app.post('/api/data/reprocess', async (req, res) => {
 
 app.use('/api/launcher', launcherRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/cte', cteRoutes);
 
 // binda so em localhost: este servidor guarda dados internos da empresa e
 // nao deve ficar acessivel por outros dispositivos na mesma rede

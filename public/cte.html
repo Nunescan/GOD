@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CT-e (CZAR) - Cesar Augusto</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="brand-mark">CA</div>
+    <div class="brand-name">CESAR<span class="thin"> AUGUSTO</span></div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">Início</a>
+    <a class="nav-link" href="dashboard.html">Monitoramento</a>
+    <a class="nav-link" href="mapa.html">Mapa</a>
+    <a class="nav-link active" href="cte.html">CT-e</a>
+    <a class="nav-link" href="settings.html">Configurações</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-clock">
+    <div id="clock"></div>
+    <div id="dateLabel"></div>
+  </div>
+  <button class="icon-btn" id="logoutBtn" title="Sair">⏻</button>
+</nav>
+
+<div class="page">
+
+  <div class="status-strip">
+    <div class="info">Status: <b id="statusLabel">verificando...</b></div>
+    <div class="info">Iniciado em: <b id="startedAt">--</b></div>
+    <div class="nav-spacer"></div>
+    <button class="btn" id="startBtn">▶️ Rodar CZAR</button>
+    <button class="btn secondary" id="stopBtn" style="display:none;">⏹️ Parar</button>
+    <button class="btn secondary" id="openBtn" style="display:none;">↗️ Abrir CZAR</button>
+  </div>
+
+  <div class="card" id="notInstalledCard" style="display:none;">
+    <div class="section-title">Ambiente não configurado</div>
+    <p class="hint">
+      O ambiente Python do CZAR ainda não foi criado nesta máquina. Dê 2 cliques em
+      <code>scripts\instalar-cte.bat</code> (na pasta do projeto) e depois volte aqui.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Log de execução</div>
+    <div class="table-wrap" style="max-height: none;">
+      <pre id="logView" style="margin:0; padding:16px; font-family: ui-monospace, Consolas, monospace; font-size:12px; line-height:1.6; white-space:pre-wrap; color: var(--text-secondary);"></pre>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/cte.js"></script>
+</body>
+</html>

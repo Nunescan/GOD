@@ -15,6 +15,17 @@ data/downloads/*
 data/cache/*
 !data/cache/.gitkeep
 
+# CT-e (CZAR) - ambiente Python e dados processados (documentos internos).
+# As subpastas de "data" e "processados" sao recriadas sozinhas pelo programa.
+cte-czar/venv/
+cte-czar/**/__pycache__/
+cte-czar/data/
+cte-czar/processados/
+cte-czar/**/*.pkl
+cte-czar/regiao_do_numero.png
+# vinculos.json guarda caminhos de pasta locais por armador - fica so na sua maquina
+cte-czar/config/vinculos.json
+
 # Logs
 *.log
 logs/

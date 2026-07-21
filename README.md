@@ -23,14 +23,18 @@ GOD/
 │   ├── index.html            # Página inicial ("modo gamer")
 │   ├── dashboard.html         # Monitoramento (KPIs, tabela)
 │   ├── mapa.html               # Mapa em tempo real
-│   └── settings.html            # Credenciais, senha do painel e atalhos
+│   ├── cte.html                 # Painel do CT-e (CZAR): rodar/parar + log
+│   └── settings.html             # Credenciais, senha do painel e atalhos
 ├── config/
 │   ├── launcher.example.json  # Modelo de atalhos (vai pro git)
 │   ├── launcher.json           # Seus atalhos de verdade (não vai pro git)
+│   ├── columnMap.json           # Mapeamento manual de colunas (se você ajustou algum)
 │   └── secrets.json             # Credenciais do Ravex + hash da senha do painel (não vai pro git)
 ├── data/
 │   ├── downloads/         # Planilhas baixadas do Ravex (não vai pro git)
 │   └── cache/               # Dados já processados/geocodificados (não vai pro git)
+├── cte-czar/              # Programa "CZAR" (Streamlit) de análise de CT-e - já existia,
+│                            # so foi organizado aqui dentro (venv/dados não vão pro git)
 ├── scripts/               # Scripts .bat de instalação e atalho
 └── docs/
 ```
@@ -75,7 +79,15 @@ estiver ligado.
   que abrem o seletor nativo do Windows, então você nunca precisa digitar o caminho
   na mão).
 
+- **CT-e**: liga/desliga o programa CZAR (análise de CT-e) e mostra o log completo
+  de tudo que acontece nele (progresso, erros) em tempo real, sem precisar abrir
+  terminal nenhum. Veja a seção própria abaixo.
+
 Pra sair (ex: antes de sair da mesa), clique no ⏻ no canto superior direito.
+
+> **Sobre o mapa:** o Ravex parou de fornecer coordenadas precisas de posição, então
+> o mapa deixou de ser prioridade e não está mais recebendo ajustes - ele continua
+> funcionando com o que der (geocodificação por texto), mas não é mais o foco.
 
 ## Como a automação funciona
 
@@ -87,6 +99,28 @@ Se falhar, use o botão **"👁️ Ver funcionando (modo visível)"** em Configu
 roda a automação de novo, mas com o navegador aparecendo na tela, pra você acompanhar
 exatamente onde trava. Se ainda assim não der pra entender, um print automático da
 tela no momento da falha fica salvo em `data/downloads/debug/`.
+
+## CT-e (CZAR)
+
+`cte-czar/` é o programa de análise de CT-e (Streamlit) que você já tinha feito -
+organizamos ele dentro do projeto, corrigimos um bug de caminho fixo (apontava pro
+perfil de usuário `caanunes` de outro PC, quebrando o OCR de login) e criamos um
+jeito de rodar ele direto pelo painel, sem terminal.
+
+**Primeira vez:** dê 2 cliques em `scripts\instalar-cte.bat` (cria o ambiente Python
+isolado e instala as dependências - streamlit, pandas, plotly, opencv, etc). Depois
+disso, use o botão **"▶️ Rodar CZAR"** na aba **CT-e** do painel: ele liga o programa
+em segundo plano, mostra tudo que acontece no **log de execução** ali na tela, e o
+botão **"↗️ Abrir CZAR"** abre o dashboard dele (upload de planilha, gráficos por
+armador - Aliança/Mercosul/Norcoast) numa aba nova.
+
+Testamos todas as páginas (Aliança, Mercosul, Norcoast, Login, Coleta, Configuração)
+e nenhuma apresentou erro nesta máquina.
+
+> A leitura automática de número de CT-e por OCR (aba **Login** do CZAR) precisa do
+> Tesseract-OCR instalado no Windows - **ainda não está instalado nesta máquina**.
+> As demais abas não dependem disso. Instruções de instalação aparecem no final do
+> `instalar-cte.bat`.
 
 ## Se as colunas da planilha tiverem nomes diferentes
 
@@ -121,13 +155,24 @@ coluna não for reconhecida, adicione a palavra-chave correspondente nessa const
 
 ## Publicando no GitHub
 
-O projeto já está com `git init` feito e commits locais. Pra subir:
+O projeto tem `git init` feito e commits locais nesta máquina - isso é tudo que dá
+pra fazer sem você. Faltam duas coisas que só você pode fazer, porque exigem sua
+conta do GitHub:
+
+1. **Criar o repositório vazio** em github.com (Novo repositório → não marque
+   "adicionar README" pra não conflitar com o que já existe aqui) e me passar a URL
+   (ex: `https://github.com/seu-usuario/painel-cesar-augusto.git`).
+2. **Autenticar uma vez**: quando o `git push` rodar, o Git Credential Manager (já
+   instalado nesta máquina) vai abrir uma janela do navegador pedindo pra você
+   logar no GitHub. Só acontece na primeira vez - depois fica salvo.
+
+Com a URL em mãos, rode (ou peça pra eu rodar):
 
 ```
 git remote add origin <url-do-seu-repositorio>
 git push -u origin main
 ```
 
-Confira antes com `git status` que `.env`, `config/secrets.json` e
-`config/launcher.json` não aparecem na lista (devem estar ignorados). Nunca force a
-inclusão deles.
+Confira antes com `git status` que `.env`, `config/secrets.json`,
+`config/launcher.json` e `cte-czar/venv/` não aparecem na lista (devem estar
+ignorados). Nunca force a inclusão deles.
