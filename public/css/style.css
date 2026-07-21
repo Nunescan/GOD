@@ -17,6 +17,12 @@
   --accent: #3987e5;      /* categorical slot 1 - azul, usado como cor "informativo/em transito" */
   --accent-soft: rgba(57, 135, 229, 0.16);
 
+  /* cor de marca (selo/monograma, telas de login e destaques) - nunca usada
+     em dados, pra nao colidir com o significado das cores de status */
+  --brand-gold: #d4af37;
+  --brand-gold-bright: #f0d074;
+  --brand-gold-soft: rgba(212, 175, 55, 0.14);
+
   --status-good: #0ca30c;
   --status-good-soft: rgba(12, 163, 12, 0.16);
   --status-warning: #fab219;
@@ -41,6 +47,7 @@ html, body {
 body {
   background:
     radial-gradient(circle at 15% 0%, #101725 0%, transparent 45%),
+    radial-gradient(circle at 85% 8%, rgba(212, 175, 55, 0.05) 0%, transparent 35%),
     radial-gradient(circle at 85% 10%, #0e1a24 0%, transparent 40%),
     var(--page);
   color: var(--text-primary);
@@ -70,13 +77,53 @@ a { color: inherit; text-decoration: none; }
   z-index: 20;
 }
 
+.nav {
+  border-top: 2px solid transparent;
+  border-image: linear-gradient(90deg, transparent, var(--brand-gold) 45%, var(--brand-gold-bright) 50%, var(--brand-gold) 55%, transparent) 1;
+}
+
 .nav-brand {
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.02em;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(150deg, #26210f, #16130a);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  color: var(--brand-gold-bright);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(212, 175, 55, 0.08);
+}
+
+.brand-mark.lg {
+  width: 68px;
+  height: 68px;
+  border-radius: 16px;
+  font-size: 24px;
+}
+
+.brand-name {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.brand-name .thin {
+  font-weight: 400;
+  color: var(--text-secondary);
 }
 
 .nav-links { display: flex; gap: 4px; margin-left: 8px; }
@@ -414,3 +461,177 @@ tbody tr:hover { background: var(--surface-2); }
   flex-wrap: wrap;
   gap: 16px;
 }
+
+/* ---------- Login ---------- */
+.login-shell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 380px;
+  max-width: 100%;
+  background: linear-gradient(180deg, var(--surface-1), var(--surface-2));
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(212, 175, 55, 0.05);
+}
+
+.login-card h1 {
+  margin: 18px 0 0;
+  font-size: 20px;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+}
+
+.login-card .subtitle {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.login-card form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-card .btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+}
+
+.login-error {
+  color: var(--status-critical);
+  font-size: 13px;
+  min-height: 16px;
+}
+
+/* ---------- Formularios (Configuracoes) ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.field input, .field select {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.field input:focus, .field select:focus { border-color: var(--brand-gold); }
+.field .hint { font-size: 12px; color: var(--muted); }
+
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.field-row .field { flex: 1; }
+
+.input-with-btn {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-btn input { flex: 1; }
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.save-msg { font-size: 13px; color: var(--status-good); }
+.save-msg.error { color: var(--status-critical); }
+
+/* ---------- Editor de atalhos ---------- */
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shortcut-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+
+.shortcut-row .icon-preview { font-size: 22px; text-align: center; }
+.shortcut-row .name { font-weight: 600; font-size: 14px; }
+.shortcut-row .path { font-size: 12px; color: var(--muted); word-break: break-all; }
+.shortcut-row .actions { display: flex; gap: 6px; }
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.icon-btn:hover { background: var(--surface-hover); color: var(--text-primary); }
+.icon-btn.danger:hover { color: var(--status-critical); border-color: var(--status-critical); }
+
+.emoji-picker {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  max-width: 320px;
+}
+
+.emoji-option {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 18px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.emoji-option:hover { background: var(--surface-hover); }
+.emoji-option.selected { border-color: var(--brand-gold); background: var(--brand-gold-soft); }

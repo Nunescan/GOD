@@ -1,0 +1,4 @@
+[
+  { "id": "outlook", "name": "Outlook", "icon": "📧", "path": "outlook.exe" },
+  { "id": "ravex", "name": "Ravex (site)", "icon": "🌐", "path": "https://longopercurso.sistema.ravex.com.br/login" }
+]

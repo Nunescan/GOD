@@ -74,3 +74,12 @@ function debounce(fn, ms) {
     timer = setTimeout(() => fn(...args), ms);
   };
 }
+
+// Liga o botao de sair (⏻) presente na nav de todas as paginas autenticadas.
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async () => {
+    await fetchJSON('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    window.location.href = 'login.html';
+  });
+}

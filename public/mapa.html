@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mapa - Painel Ravex</title>
+<title>Mapa - Cesar Augusto</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="css/style.css">
 <style>
@@ -15,17 +15,22 @@
 <body>
 
 <nav class="nav">
-  <div class="nav-brand">🚛 Painel Ravex</div>
+  <div class="nav-brand">
+    <div class="brand-mark">CA</div>
+    <div class="brand-name">CESAR<span class="thin"> AUGUSTO</span></div>
+  </div>
   <div class="nav-links">
     <a class="nav-link" href="index.html">Início</a>
     <a class="nav-link" href="dashboard.html">Monitoramento</a>
     <a class="nav-link active" href="mapa.html">Mapa</a>
+    <a class="nav-link" href="settings.html">Configurações</a>
   </div>
   <div class="nav-spacer"></div>
   <div class="nav-clock">
     <div id="clock"></div>
     <div id="dateLabel"></div>
   </div>
+  <button class="icon-btn" id="logoutBtn" title="Sair">⏻</button>
 </nav>
 
 <div class="map-shell">

@@ -6,7 +6,10 @@ const path = require('path');
 const { loginAndExport } = require('../automation/ravexClient');
 const { rebuildCache, readCache } = require('./services/pipeline');
 const { estimateRemaining } = require('./services/route');
+const { requireAuth } = require('./middleware/auth');
 const launcherRoutes = require('./routes/launcher');
+const authRoutes = require('./routes/auth');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '4173', 10);
@@ -14,6 +17,8 @@ const AUTO_REFRESH_MINUTES = parseInt(process.env.AUTO_REFRESH_MINUTES || '10', 
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', authRoutes);
+app.use(requireAuth);
 app.use(express.static(path.resolve(__dirname, '../public')));
 
 // ---------- estado da automacao (em memoria) ----------
@@ -28,13 +33,13 @@ function pushLog(message) {
   if (automationState.log.length > 200) automationState.log.shift();
 }
 
-async function runAutomationAndRefresh() {
+async function runAutomationAndRefresh(opts = {}) {
   if (automationState.running) return { ok: false, error: 'Automacao ja esta em andamento' };
   automationState.running = true;
   automationState.log = [];
   try {
-    pushLog('Iniciando automacao (login + exportacao)...');
-    const result = await loginAndExport((msg) => pushLog(msg));
+    pushLog(opts.visible ? 'Iniciando automacao (modo visivel)...' : 'Iniciando automacao (login + exportacao)...');
+    const result = await loginAndExport((msg) => pushLog(msg), { headless: !opts.visible });
     automationState.lastResult = result;
     if (result.ok) {
       pushLog('Processando planilha e atualizando mapa...');
@@ -56,7 +61,8 @@ app.post('/api/automation/run', (req, res) => {
   if (automationState.running) {
     return res.status(409).json({ ok: false, error: 'Automacao ja esta em andamento' });
   }
-  runAutomationAndRefresh(); // roda em segundo plano; o front acompanha via /status
+  const visible = Boolean((req.body || {}).visible);
+  runAutomationAndRefresh({ visible }); // roda em segundo plano; o front acompanha via /status
   res.json({ ok: true, started: true });
 });
 
@@ -134,6 +140,7 @@ app.post('/api/data/reprocess', async (req, res) => {
 });
 
 app.use('/api/launcher', launcherRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // binda so em localhost: este servidor guarda dados internos da empresa e
 // nao deve ficar acessivel por outros dispositivos na mesma rede

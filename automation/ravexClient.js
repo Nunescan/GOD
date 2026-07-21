@@ -1,6 +1,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
+const { getRavexCredentials } = require('../server/services/settings');
 
 const DOWNLOAD_DIR = path.resolve(__dirname, '../data/downloads');
 const DEBUG_DIR = path.resolve(__dirname, '../data/downloads/debug');
@@ -18,15 +19,15 @@ function log(onProgress, message) {
 /**
  * Faz login no Ravex, abre Monitoramento e baixa a planilha ("Exportar todos os dados").
  * onProgress(mensagem) e opcional, usado pra mandar status pro dashboard em tempo real.
+ * opts.headless (opcional) sobrescreve o padrao do .env - usado pelo botao "ver funcionando".
  */
-async function loginAndExport(onProgress) {
-  const headless = process.env.RAVEX_HEADLESS !== 'false';
+async function loginAndExport(onProgress, opts = {}) {
+  const headless = opts.headless !== undefined ? opts.headless : process.env.RAVEX_HEADLESS !== 'false';
   const url = process.env.RAVEX_URL || 'https://longopercurso.sistema.ravex.com.br/login';
-  const username = process.env.RAVEX_USERNAME;
-  const password = process.env.RAVEX_PASSWORD;
+  const { username, password } = getRavexCredentials();
 
   if (!username || !password) {
-    return { ok: false, error: 'RAVEX_USERNAME/RAVEX_PASSWORD nao configurados no arquivo .env' };
+    return { ok: false, error: 'Credenciais do Ravex nao configuradas. Preencha em Configurações.' };
   }
 
   const browser = await chromium.launch({ headless });

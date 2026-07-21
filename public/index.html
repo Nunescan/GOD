@@ -3,23 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel Ravex</title>
+<title>Cesar Augusto</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <nav class="nav">
-  <div class="nav-brand">🚛 Painel Ravex</div>
+  <div class="nav-brand">
+    <div class="brand-mark">CA</div>
+    <div class="brand-name">CESAR<span class="thin"> AUGUSTO</span></div>
+  </div>
   <div class="nav-links">
     <a class="nav-link active" href="index.html">Início</a>
     <a class="nav-link" href="dashboard.html">Monitoramento</a>
     <a class="nav-link" href="mapa.html">Mapa</a>
+    <a class="nav-link" href="settings.html">Configurações</a>
   </div>
   <div class="nav-spacer"></div>
   <div class="nav-clock">
     <div id="clock"></div>
     <div id="dateLabel"></div>
   </div>
+  <button class="icon-btn" id="logoutBtn" title="Sair">⏻</button>
 </nav>
 
 <div class="page">
@@ -56,6 +61,13 @@
         <div>
           <div class="title">Mapa em tempo real</div>
           <div class="subtitle">Posição atual de toda a frota</div>
+        </div>
+      </div>
+      <div class="hero-card" onclick="window.location.href='settings.html'">
+        <div class="icon">⚙️</div>
+        <div>
+          <div class="title">Configurações</div>
+          <div class="subtitle">Credenciais, senha e atalhos</div>
         </div>
       </div>
     </div>

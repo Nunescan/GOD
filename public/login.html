@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cesar Augusto</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="login-shell">
+  <div class="login-card">
+    <div class="brand-mark lg">CA</div>
+    <h1>CESAR AUGUSTO</h1>
+    <p class="subtitle" id="subtitle">Digite sua senha para entrar</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="password">Senha</label>
+        <input type="password" id="password" autocomplete="current-password" autofocus>
+      </div>
+      <div class="field" id="confirmField" style="display:none;">
+        <label for="confirmPassword">Confirmar senha</label>
+        <input type="password" id="confirmPassword" autocomplete="new-password">
+      </div>
+      <div class="login-error" id="errorMsg"></div>
+      <button type="submit" class="btn" id="submitBtn">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/login.js"></script>
+</body>
+</html>

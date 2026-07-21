@@ -3,6 +3,11 @@ node_modules/
 
 # Credenciais - NUNCA suba isso pro GitHub
 .env
+config/secrets.json
+
+# Atalhos pessoais (caminhos locais do seu PC) - fica so na sua maquina.
+# config/launcher.example.json (o template) continua versionado.
+config/launcher.json
 
 # Dados baixados da planilha (tem informacao interna da empresa)
 data/downloads/*

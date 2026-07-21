@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurações - Cesar Augusto</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="brand-mark">CA</div>
+    <div class="brand-name">CESAR<span class="thin"> AUGUSTO</span></div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">Início</a>
+    <a class="nav-link" href="dashboard.html">Monitoramento</a>
+    <a class="nav-link" href="mapa.html">Mapa</a>
+    <a class="nav-link active" href="settings.html">Configurações</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-clock">
+    <div id="clock"></div>
+    <div id="dateLabel"></div>
+  </div>
+  <button class="icon-btn" id="logoutBtn" title="Sair">⏻</button>
+</nav>
+
+<div class="page">
+
+  <div class="card">
+    <div class="section-title">Credenciais do Ravex</div>
+    <form id="ravexForm">
+      <div class="field-row">
+        <div class="field">
+          <label for="ravexUsername">E-mail / usuário</label>
+          <input type="text" id="ravexUsername" autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="ravexPassword">Senha</label>
+          <input type="password" id="ravexPassword" autocomplete="new-password" placeholder="•••••••• (deixe em branco pra manter)">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn">Salvar credenciais</button>
+        <button type="button" class="btn secondary" id="testBtn">👁️ Ver funcionando (modo visível)</button>
+        <span class="save-msg" id="ravexMsg"></span>
+      </div>
+      <div class="field"><span class="hint" id="testLog"></span></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Senha de acesso ao painel</div>
+    <form id="appPasswordForm">
+      <div class="field-row">
+        <div class="field" id="currentPasswordField" style="display:none;">
+          <label for="currentPassword">Senha atual</label>
+          <input type="password" id="currentPassword" autocomplete="current-password">
+        </div>
+        <div class="field">
+          <label for="newPassword">Nova senha</label>
+          <input type="password" id="newPassword" autocomplete="new-password">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn">Salvar senha</button>
+        <span class="save-msg" id="appPasswordMsg"></span>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Atalhos da tela inicial</div>
+    <div class="shortcut-list" id="shortcutList"></div>
+
+    <div style="height:20px;"></div>
+
+    <div class="section-title" id="formTitle">Adicionar atalho</div>
+    <input type="hidden" id="editingId">
+    <div class="field-row">
+      <div class="field" style="max-width:160px;">
+        <label>Ícone</label>
+        <div id="iconPreviewBtn" class="icon-btn" style="width:44px;height:44px;font-size:20px;cursor:pointer;">🔗</div>
+      </div>
+      <div class="field">
+        <label for="shortcutName">Nome</label>
+        <input type="text" id="shortcutName" placeholder="Ex: Planilha de Programação">
+      </div>
+    </div>
+    <div class="field">
+      <label for="shortcutPath">Caminho (arquivo, pasta ou link)</label>
+      <div class="input-with-btn">
+        <input type="text" id="shortcutPath" placeholder="C:\Caminho\Para\Arquivo.xlsx ou https://...">
+        <button type="button" class="btn secondary" id="pickFileBtn">📄 Procurar arquivo</button>
+        <button type="button" class="btn secondary" id="pickFolderBtn">📁 Procurar pasta</button>
+      </div>
+    </div>
+    <div class="field">
+      <div class="emoji-picker" id="emojiPicker"></div>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn" id="saveShortcutBtn">Salvar atalho</button>
+      <button type="button" class="btn secondary" id="cancelEditBtn" style="display:none;">Cancelar edição</button>
+      <span class="save-msg" id="shortcutMsg"></span>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/settings.js"></script>
+</body>
+</html>
