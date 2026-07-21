@@ -1,7 +1,7 @@
 import os
 import zipfile
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import win32com.client
 import pythoncom
 import re
@@ -125,17 +125,40 @@ class DownloadAnexos:
         
         try:
             itens = pasta_outlook.Items
+            # mais recentes primeiro: assim, com a pasta ordenada, da pra parar assim
+            # que passar do periodo pedido, sem precisar varrer o resto da pasta
+            try:
+                itens.Sort("[ReceivedTime]", True)
+            except Exception as e:
+                print(f"⚠️ Não foi possível ordenar por data (seguindo sem ordenar): {e}")
+
             total_itens = itens.Count
             print(f"📧 Total de itens na pasta: {total_itens}")
-            
+
+            # antes, o "periodo (dias)" nao filtrava nada de verdade e a pasta parava
+            # sempre no item 999, descartando o resto sem avisar. Agora filtra por
+            # data de verdade e processa a pasta inteira dentro do periodo pedido.
+            data_limite = datetime.now() - timedelta(days=dias)
+
             itens_processados = 0
-            for i in range(1, min(total_itens + 1, 1000)):
+            for i in range(1, total_itens + 1):
                 try:
                     item = itens.Item(i)
-                    
+
                     if hasattr(item, 'Class') and item.Class == 43:
+                        if hasattr(item, 'ReceivedTime') and hasattr(item.ReceivedTime, 'strftime'):
+                            try:
+                                recebido_em = datetime(item.ReceivedTime.year, item.ReceivedTime.month, item.ReceivedTime.day)
+                                if recebido_em < data_limite:
+                                    # itens ordenados do mais novo pro mais antigo: a partir
+                                    # daqui todos os seguintes tambem estarao fora do periodo
+                                    print(f"⏹️ Fim do período ({dias} dias) alcançado em {itens_processados} e-mails processados")
+                                    break
+                            except Exception:
+                                pass
+
                         itens_processados += 1
-                        
+
                         if hasattr(item, 'Attachments') and item.Attachments.Count > 0:
                             
                             data_email = ""

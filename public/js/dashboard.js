@@ -67,30 +67,57 @@ function renderStatusBreakdown(rows) {
   `).join('');
 }
 
+function outrasInfosRow(raw, colspan) {
+  const entradas = Object.entries(raw || {}).filter(([, v]) => v !== '' && v !== null && v !== undefined);
+  if (entradas.length === 0) return '';
+  return `
+    <tr class="detail-row" style="display:none;">
+      <td colspan="${colspan}">
+        <div style="max-height:260px; overflow-y:auto; padding: 10px 4px;">
+          ${entradas.map(([k, v]) => `<div style="padding:3px 0; white-space:normal;"><span style="color:var(--muted);">${k}:</span> ${v}</div>`).join('')}
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
 function renderTable(rows) {
   emptyState.style.display = rows.length === 0 ? 'block' : 'none';
+  const COLSPAN = 11;
   tableBody.innerHTML = rows.map((r) => {
     const cls = classifyStatus(r.status);
     return `
-      <tr>
+      <tr class="main-row" style="cursor:pointer;" title="Clique pra ver todas as informações da planilha">
         <td>${r.programacao || '-'}</td>
         <td><span class="badge ${cls.key}">${cls.icon} ${r.status || 'Sem status'}</span></td>
         <td>${r.placa || '-'}</td>
+        <td>${r.carreta || '-'}</td>
         <td>${r.motorista || '-'}</td>
         <td>${r.transportadora || '-'}</td>
         <td>${r.origem || '-'}</td>
         <td>${r.destino || '-'}</td>
         <td>${r.posicaoAtual || '-'}</td>
+        <td>${r.dataSaida || '-'}</td>
         <td>${r.previsaoChegada || '-'}</td>
       </tr>
+      ${outrasInfosRow(r.raw, COLSPAN)}
     `;
   }).join('');
+
+  tableBody.querySelectorAll('.main-row').forEach((row) => {
+    row.addEventListener('click', () => {
+      const detail = row.nextElementSibling;
+      if (detail && detail.classList.contains('detail-row')) {
+        detail.style.display = detail.style.display === 'none' ? 'table-row' : 'none';
+      }
+    });
+  });
 }
 
 function applyFilter() {
   const q = normalizeText(searchInput.value);
   const filtered = !q ? allRows : allRows.filter((r) =>
-    [r.programacao, r.origem, r.destino, r.posicaoAtual, r.placa, r.motorista, r.status]
+    [r.programacao, r.origem, r.destino, r.posicaoAtual, r.placa, r.carreta, r.motorista, r.status]
       .some((field) => normalizeText(field).includes(q))
   );
   renderTable(filtered);

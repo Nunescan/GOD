@@ -2,5 +2,7 @@
   { "id": "outlook", "name": "Outlook", "icon": "📧", "path": "outlook.exe" },
   { "id": "outlook-web", "name": "Outlook Web", "icon": "📨", "path": "https://outlook.office.com/mail/" },
   { "id": "ravex", "name": "Ravex (site)", "icon": "🌐", "path": "https://longopercurso.sistema.ravex.com.br/login" },
-  { "id": "trafegus", "name": "Trafegus", "icon": "🚦", "path": "https://seara.trafegus.com.br/trafegusweb/" }
+  { "id": "trafegus", "name": "Trafegus", "icon": "🚦", "path": "https://seara.trafegus.com.br/trafegusweb/" },
+  { "id": "situacao-cadastral", "name": "Situação Cadastral", "icon": "🪪", "path": "https://longopercurso.sistema.ravex.com.br/situacao-consulta-cadastral-veiculo" },
+  { "id": "alocacao-ravex", "name": "Alocação (Ravex)", "icon": "🗓️", "path": "https://longopercurso.sistema.ravex.com.br/programacao-transporte" }
 ]

@@ -83,7 +83,7 @@ app.get('/api/data/search', (req, res) => {
   if (!q) return res.json(cache);
 
   const rows = cache.rows.filter((r) =>
-    [r.programacao, r.origem, r.destino, r.posicaoAtual, r.placa, r.motorista, r.status]
+    [r.programacao, r.origem, r.destino, r.posicaoAtual, r.placa, r.carreta, r.motorista, r.status]
       .some((field) => String(field || '').toLowerCase().includes(q))
   );
   res.json({ updatedAt: cache.updatedAt, total: rows.length, rows });
@@ -98,6 +98,7 @@ app.get('/api/map', (req, res) => {
     .map((r) => ({
       programacao: r.programacao,
       placa: r.placa,
+      carreta: r.carreta,
       motorista: r.motorista,
       status: r.status,
       origem: r.origem,
@@ -108,7 +109,10 @@ app.get('/api/map', (req, res) => {
       posicaoPrecisa: r.posicaoAtualGeo.source === 'veiculo',
       origemGeo: r.origemGeo,
       destinoGeo: r.destinoGeo,
+      transportadora: r.transportadora,
       previsaoChegada: r.previsaoChegada,
+      dataSaida: r.dataSaida,
+      raw: r.raw,
     }));
 
   res.json({ updatedAt: cache.updatedAt, total: points.length, points });

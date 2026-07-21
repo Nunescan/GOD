@@ -11,6 +11,16 @@ const SEARCH_SELECTOR = 'input[placeholder="Pesquisar no menu"]';
 const EXPORT_SELECTOR = '[aria-label="Exportar todos os dados"], span:has-text("Exportar todos os dados")';
 const OVERFLOW_SELECTOR = '.dx-toolbar-menu-container .dx-button, .dx-dropdownmenu-button';
 const VEICULO_URL = 'https://longopercurso.sistema.ravex.com.br/relatorio-informacoes-veiculo';
+const SITUACAO_URL = 'https://longopercurso.sistema.ravex.com.br/situacao-consulta-cadastral-veiculo';
+const ALOCACAO_URL = 'https://longopercurso.sistema.ravex.com.br/programacao-transporte';
+
+// relatorios extras: cada um e uma URL direta + exporta igual ao Monitoramento.
+// Se algum falhar, nao derruba os outros - so fica sem aquele dado nessa rodada.
+const EXTRA_REPORTS = [
+  { url: VEICULO_URL, savePrefix: 'veiculos', latestName: 'veiculos-latest.xlsx', label: 'informações do veículo (coordenadas)' },
+  { url: SITUACAO_URL, savePrefix: 'situacao', latestName: 'situacao-latest.xlsx', label: 'situação cadastral' },
+  { url: ALOCACAO_URL, savePrefix: 'alocacao', latestName: 'alocacao-latest.xlsx', label: 'programação de transporte (alocação)' },
+];
 
 function log(onProgress, message) {
   console.log(`[ravex] ${message}`);
@@ -139,26 +149,29 @@ async function loginAndExport(onProgress, opts = {}) {
       latestName: 'latest.xlsx',
     });
 
-    // segundo relatorio: informacoes do veiculo (tem as coordenadas geograficas
-    // precisas por SPE/Programacao de Transporte). Se falhar, nao derruba o
-    // resultado do Monitoramento - so fica sem coordenadas precisas nessa rodada.
-    let veiculoResult = null;
-    try {
-      log(onProgress, 'Abrindo relatório de informações do veículo...');
-      await page.goto(VEICULO_URL, { waitUntil: 'networkidle', timeout: 60000 });
-      veiculoResult = await exportGrid(page, context, {
-        onProgress,
-        savePrefix: 'veiculos',
-        latestName: 'veiculos-latest.xlsx',
-      });
-    } catch (err) {
-      log(onProgress, `Aviso: falha ao exportar relatório de veículo: ${err.message}`);
+    // relatorios extras (URL direta cada um): veiculo/coordenadas, situação
+    // cadastral, alocação. Cada falha e isolada - nao derruba o Monitoramento
+    // nem os outros relatorios extras.
+    const extraFiles = {};
+    for (const report of EXTRA_REPORTS) {
+      try {
+        log(onProgress, `Abrindo relatório de ${report.label}...`);
+        await page.goto(report.url, { waitUntil: 'networkidle', timeout: 60000 });
+        const result = await exportGrid(page, context, {
+          onProgress,
+          savePrefix: report.savePrefix,
+          latestName: report.latestName,
+        });
+        extraFiles[report.savePrefix] = result.savedPath;
+      } catch (err) {
+        log(onProgress, `Aviso: falha ao exportar ${report.label}: ${err.message}`);
+      }
     }
 
     return {
       ok: true,
       file: monitoramentoResult.savedPath,
-      veiculoFile: veiculoResult ? veiculoResult.savedPath : null,
+      extraFiles,
       timestamp: new Date().toISOString(),
     };
   } catch (err) {

@@ -4,17 +4,26 @@ const fs = require('fs');
 // Palavras-chave usadas pra descobrir automaticamente qual coluna da planilha
 // corresponde a cada campo, mesmo que o cabecalho real varie um pouco
 // (ex: "Posição Atual", "Posicao atual do veiculo" etc caem no mesmo campo).
+// "include": palavras-chave que precisam aparecer no cabecalho (por
+// substring). "exclude" (opcional): se aparecer, descarta esse cabecalho pro
+// campo, mesmo que tenha batido no include - evita colisao entre campos
+// parecidos (ex: "Placa Carreta" nao pode virar o campo "placa" do cavalo).
+// Cuidado com keywords curtas: "eta" bate em "carreta" por substring, entao
+// evitamos abreviacoes assim.
 const FIELD_KEYWORDS = {
-  programacao: ['programacao de transporte', 'programacao', 'nr programacao', 'numero da viagem', 'viagem'],
-  origem: ['origem'],
-  destino: ['destino'],
-  posicaoAtual: ['posicao atual', 'posicao'],
-  status: ['status', 'situacao'],
-  motorista: ['motorista'],
-  placa: ['placa'],
-  transportadora: ['transportadora'],
-  previsaoChegada: ['previsao de chegada', 'previsao chegada', 'data prevista', 'eta'],
-  dataSaida: ['data de saida', 'data saida', 'saida'],
+  programacao: { include: ['programacao de transporte', 'programacao', 'nr programacao', 'numero da viagem', 'viagem'] },
+  origem: { include: ['origem'] },
+  destino: { include: ['destino'] },
+  posicaoAtual: { include: ['posicao atual', 'posicao'] },
+  status: { include: ['status', 'situacao'] },
+  motorista: { include: ['motorista'] },
+  // "placa" no Ravex e a placa do cavalo (unidade tratora) - exclui headers
+  // de carreta pra nao roubar a coluna errada quando os dois tem "placa" no nome
+  placa: { include: ['placa cavalo', 'placa'], exclude: ['carreta', 'reboque'] },
+  carreta: { include: ['carreta', 'reboque', 'placa carreta'] },
+  transportadora: { include: ['transportadora'] },
+  previsaoChegada: { include: ['previsao de chegada', 'previsao chegada', 'data prevista', 'data de chegada'] },
+  dataSaida: { include: ['data de saida', 'data saida', 'saida'] },
 };
 
 // Campos que sao datas de verdade - os demais nunca devem receber um valor
@@ -40,10 +49,13 @@ function detectColumnMap(headers, overrides = {}) {
       map[field] = overrides[field];
       continue;
     }
-    const keywords = FIELD_KEYWORDS[field];
+    const { include, exclude = [] } = FIELD_KEYWORDS[field];
     let found = null;
     for (let i = 0; i < normalizedHeaders.length; i++) {
-      if (keywords.some((kw) => normalizedHeaders[i].includes(kw))) {
+      const header = normalizedHeaders[i];
+      const matches = include.some((kw) => header.includes(kw));
+      const blocked = exclude.some((kw) => header.includes(kw));
+      if (matches && !blocked) {
         found = headers[i];
         break;
       }
@@ -135,6 +147,7 @@ async function normalizeRows(filePath, overrides = {}) {
       status: formatField(get('status'), 'status'),
       motorista: formatField(get('motorista'), 'motorista'),
       placa: formatField(get('placa'), 'placa'),
+      carreta: formatField(get('carreta'), 'carreta'),
       transportadora: formatField(get('transportadora'), 'transportadora'),
       previsaoChegada: formatField(get('previsaoChegada'), 'previsaoChegada'),
       dataSaida: formatField(get('dataSaida'), 'dataSaida'),
