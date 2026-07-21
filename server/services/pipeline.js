@@ -5,6 +5,20 @@ const { geocodeText } = require('./geocode');
 
 const LATEST_XLSX = path.resolve(__dirname, '../../data/downloads/latest.xlsx');
 const CACHE_JSON = path.resolve(__dirname, '../../data/cache/latest.json');
+const COLUMN_MAP_FILE = path.resolve(__dirname, '../../config/columnMap.json');
+
+// trava de seguranca: nunca deixa uma planilha com dado sujo (ou uma coluna
+// mapeada errada) fazer o reprocessamento demorar horas em buscas de geocoding
+const MAX_GEOCODE_LOOKUPS = 300;
+
+function readColumnOverrides() {
+  if (!fs.existsSync(COLUMN_MAP_FILE)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(COLUMN_MAP_FILE, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
 
 /**
  * Le data/downloads/latest.xlsx, normaliza as linhas e geocodifica cada
@@ -12,17 +26,24 @@ const CACHE_JSON = path.resolve(__dirname, '../../data/cache/latest.json');
  * data/cache/latest.json - que e o que as rotas da API leem, pra responder rapido.
  */
 async function rebuildCache() {
-  const { rows, columnMap, rawHeaders } = await normalizeRows(LATEST_XLSX);
+  const overrides = readColumnOverrides();
+  const { rows, columnMap, rawHeaders } = await normalizeRows(LATEST_XLSX, overrides);
 
-  const uniqueTexts = new Set();
+  const counts = new Map();
   rows.forEach((r) => {
-    if (r.posicaoAtual) uniqueTexts.add(r.posicaoAtual);
-    if (r.origem) uniqueTexts.add(r.origem);
-    if (r.destino) uniqueTexts.add(r.destino);
+    [r.posicaoAtual, r.origem, r.destino].forEach((text) => {
+      if (text) counts.set(text, (counts.get(text) || 0) + 1);
+    });
   });
 
+  // processa primeiro os textos mais frequentes (mais chance de serem locais
+  // de verdade e nao ruido), e corta no limite de seguranca
+  const uniqueTexts = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([text]) => text);
+  const toGeocode = uniqueTexts.slice(0, MAX_GEOCODE_LOOKUPS);
+  const geocodeSkipped = uniqueTexts.length - toGeocode.length;
+
   const geo = {};
-  for (const text of uniqueTexts) {
+  for (const text of toGeocode) {
     geo[text] = await geocodeText(text);
   }
 
@@ -37,6 +58,7 @@ async function rebuildCache() {
     columnMap,
     rawHeaders,
     total: rows.length,
+    geocodeSkipped,
     rows,
   };
 

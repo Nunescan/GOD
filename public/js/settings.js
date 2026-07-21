@@ -73,6 +73,73 @@ testBtn.addEventListener('click', async () => {
   }
 });
 
+// ---------- mapeamento de colunas ----------
+const FIELD_LABELS = {
+  programacao: 'Programação de Transporte',
+  origem: 'Origem',
+  destino: 'Destino',
+  posicaoAtual: 'Posição Atual',
+  status: 'Status',
+  motorista: 'Motorista',
+  placa: 'Placa',
+  transportadora: 'Transportadora',
+  previsaoChegada: 'Previsão de Chegada',
+  dataSaida: 'Data de Saída',
+};
+
+const columnMapForm = document.getElementById('columnMapForm');
+const columnMapMsg = document.getElementById('columnMapMsg');
+
+async function loadColumnMap() {
+  try {
+    const data = await fetchJSON('/api/settings/columns');
+    if (!data.rawHeaders || data.rawHeaders.length === 0) {
+      columnMapForm.innerHTML = '<div class="empty-state">Nenhuma planilha carregada ainda — atualize o monitoramento primeiro.</div>';
+      return;
+    }
+    columnMapForm.innerHTML = data.fields.map((field) => {
+      const current = data.overrides[field] || '';
+      const detected = data.detected[field] || '';
+      const autoLabel = detected ? `Automático (${detected})` : 'Automático (não detectado)';
+      const options = data.rawHeaders.map((h) =>
+        `<option value="${h}" ${h === current ? 'selected' : ''}>${h}</option>`
+      ).join('');
+      return `
+        <div class="field" style="margin-bottom:10px;">
+          <label>${FIELD_LABELS[field] || field}</label>
+          <select data-field="${field}">
+            <option value="">${autoLabel}</option>
+            ${options}
+          </select>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    columnMapForm.innerHTML = `<div class="empty-state">Erro: ${err.message}</div>`;
+  }
+}
+
+document.getElementById('saveColumnMapBtn').addEventListener('click', async () => {
+  const overrides = {};
+  columnMapForm.querySelectorAll('select[data-field]').forEach((sel) => {
+    if (sel.value) overrides[sel.dataset.field] = sel.value;
+  });
+  columnMapMsg.textContent = 'Reprocessando...';
+  columnMapMsg.classList.remove('error');
+  try {
+    await fetchJSON('/api/settings/columns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(overrides),
+    });
+    columnMapMsg.textContent = 'Salvo e reprocessado!';
+    loadColumnMap();
+  } catch (err) {
+    columnMapMsg.textContent = err.message;
+    columnMapMsg.classList.add('error');
+  }
+});
+
 // ---------- senha do painel ----------
 const appPasswordForm = document.getElementById('appPasswordForm');
 const currentPasswordField = document.getElementById('currentPasswordField');
@@ -245,5 +312,6 @@ document.getElementById('saveShortcutBtn').addEventListener('click', async () =>
 
 selectIcon('🔗');
 loadRavexSettings();
+loadColumnMap();
 loadAppPasswordState();
 loadShortcuts();

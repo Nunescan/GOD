@@ -52,6 +52,20 @@
   </div>
 
   <div class="card">
+    <div class="section-title">Mapeamento de colunas da planilha</div>
+    <p class="hint" style="margin:-4px 0 14px;">
+      O sistema tenta descobrir sozinho qual coluna da planilha é cada campo. Se algum
+      campo vier errado (ex: uma data aparecendo em "Posição Atual"), escolha manualmente
+      a coluna certa abaixo.
+    </p>
+    <div id="columnMapForm"></div>
+    <div class="form-actions">
+      <button type="button" class="btn" id="saveColumnMapBtn">Salvar e reprocessar</button>
+      <span class="save-msg" id="columnMapMsg"></span>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="section-title">Senha de acesso ao painel</div>
     <form id="appPasswordForm">
       <div class="field-row">
