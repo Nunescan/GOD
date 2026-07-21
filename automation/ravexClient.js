@@ -10,6 +10,7 @@ const PASSWORD_SELECTOR = 'input[formcontrolname="password"]';
 const SEARCH_SELECTOR = 'input[placeholder="Pesquisar no menu"]';
 const EXPORT_SELECTOR = '[aria-label="Exportar todos os dados"], span:has-text("Exportar todos os dados")';
 const OVERFLOW_SELECTOR = '.dx-toolbar-menu-container .dx-button, .dx-dropdownmenu-button';
+const VEICULO_URL = 'https://longopercurso.sistema.ravex.com.br/relatorio-informacoes-veiculo';
 
 function log(onProgress, message) {
   console.log(`[ravex] ${message}`);
@@ -17,7 +18,70 @@ function log(onProgress, message) {
 }
 
 /**
- * Faz login no Ravex, abre Monitoramento e baixa a planilha ("Exportar todos os dados").
+ * Espera a grade (DevExtreme) da pagina atual carregar e clica em "Exportar
+ * todos os dados", salvando o arquivo baixado. Reaproveitado tanto pro
+ * relatorio de Monitoramento quanto pro de Informacoes do Veiculo.
+ */
+async function exportGrid(page, context, { onProgress, savePrefix, latestName }) {
+  log(onProgress, `Aguardando a grade carregar (${savePrefix})...`);
+  await page.waitForSelector('.dx-datagrid', { timeout: 60000 });
+  // espera os dados de verdade aparecerem (nao so o esqueleto do grid) e
+  // qualquer indicador de carregamento sumir, antes de tentar exportar
+  await page.waitForSelector('.dx-data-row', { timeout: 30000 }).catch(() => {});
+  await page.locator('.dx-loadpanel-content').waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(1000);
+
+  log(onProgress, `Exportando planilha (${savePrefix})...`);
+  let exportLocator = page.locator(EXPORT_SELECTOR).first();
+
+  // se o botao nao estiver visivel, a toolbar provavelmente colapsou ele
+  // no menu de overflow ("...") - abre esse menu antes de tentar de novo
+  if (!(await exportLocator.isVisible().catch(() => false))) {
+    const overflow = page.locator(OVERFLOW_SELECTOR).first();
+    if (await overflow.count() > 0) {
+      await overflow.click();
+      await page.waitForTimeout(300);
+      exportLocator = page.locator(EXPORT_SELECTOR).first();
+    }
+  }
+
+  await exportLocator.waitFor({ state: 'visible', timeout: 30000 });
+  await exportLocator.scrollIntoViewIfNeeded();
+
+  // as vezes o export abre numa aba nova em vez de disparar o evento de
+  // download direto na mesma pagina - escuta os dois casos ao mesmo tempo
+  const popupPromise = context.waitForEvent('page', { timeout: 60000 }).catch(() => null);
+  const downloadPromise = page.waitForEvent('download', { timeout: 60000 }).catch(() => null);
+  await exportLocator.click();
+
+  let download = await downloadPromise;
+  if (!download) {
+    const popup = await popupPromise;
+    if (popup) download = await popup.waitForEvent('download', { timeout: 15000 }).catch(() => null);
+  }
+
+  if (!download) {
+    fs.mkdirSync(DEBUG_DIR, { recursive: true });
+    const shot = path.join(DEBUG_DIR, `falha_${savePrefix}_${Date.now()}.png`);
+    await page.screenshot({ path: shot, fullPage: true }).catch(() => {});
+    throw new Error(`Download (${savePrefix}) não iniciou a tempo. Print salvo em ${shot} para investigar.`);
+  }
+
+  fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  const savedPath = path.join(DOWNLOAD_DIR, `${savePrefix}_${dateStamp}.xlsx`);
+  await download.saveAs(savedPath);
+
+  const latestPath = path.join(DOWNLOAD_DIR, latestName);
+  fs.copyFileSync(savedPath, latestPath);
+
+  log(onProgress, `Planilha (${savePrefix}) baixada com sucesso.`);
+  return { savedPath, latestPath };
+}
+
+/**
+ * Faz login no Ravex e baixa dois relatorios: Monitoramento (via menu) e
+ * Informacoes do Veiculo (URL direta, tem as coordenadas geograficas).
  * onProgress(mensagem) e opcional, usado pra mandar status pro dashboard em tempo real.
  * opts.headless (opcional) sobrescreve o padrao do .env - usado pelo botao "ver funcionando".
  */
@@ -41,7 +105,7 @@ async function loginAndExport(onProgress, opts = {}) {
   const page = await context.newPage();
 
   try {
-    log(onProgress, 'Abrindo pagina de login...');
+    log(onProgress, 'Abrindo página de login...');
     await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
 
     await page.fill(LOGIN_SELECTOR, username);
@@ -67,63 +131,36 @@ async function loginAndExport(onProgress, opts = {}) {
     await page.waitForTimeout(800); // tempo pra lista de sugestoes do menu aparecer
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-
     await page.waitForLoadState('networkidle', { timeout: 60000 });
-    log(onProgress, 'Aguardando a grade carregar...');
-    await page.waitForSelector('.dx-datagrid', { timeout: 60000 });
-    // espera os dados de verdade aparecerem (nao so o esqueleto do grid) e
-    // qualquer indicador de carregamento sumir, antes de tentar exportar
-    await page.waitForSelector('.dx-data-row', { timeout: 30000 }).catch(() => {});
-    await page.locator('.dx-loadpanel-content').waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {});
-    await page.waitForTimeout(1000);
 
-    log(onProgress, 'Exportando planilha...');
-    let exportLocator = page.locator(EXPORT_SELECTOR).first();
+    const monitoramentoResult = await exportGrid(page, context, {
+      onProgress,
+      savePrefix: 'monitoramento',
+      latestName: 'latest.xlsx',
+    });
 
-    // se o botao nao estiver visivel, a toolbar provavelmente colapsou ele
-    // no menu de overflow ("...") - abre esse menu antes de tentar de novo
-    if (!(await exportLocator.isVisible().catch(() => false))) {
-      const overflow = page.locator(OVERFLOW_SELECTOR).first();
-      if (await overflow.count() > 0) {
-        await overflow.click();
-        await page.waitForTimeout(300);
-        exportLocator = page.locator(EXPORT_SELECTOR).first();
-      }
+    // segundo relatorio: informacoes do veiculo (tem as coordenadas geograficas
+    // precisas por SPE/Programacao de Transporte). Se falhar, nao derruba o
+    // resultado do Monitoramento - so fica sem coordenadas precisas nessa rodada.
+    let veiculoResult = null;
+    try {
+      log(onProgress, 'Abrindo relatório de informações do veículo...');
+      await page.goto(VEICULO_URL, { waitUntil: 'networkidle', timeout: 60000 });
+      veiculoResult = await exportGrid(page, context, {
+        onProgress,
+        savePrefix: 'veiculos',
+        latestName: 'veiculos-latest.xlsx',
+      });
+    } catch (err) {
+      log(onProgress, `Aviso: falha ao exportar relatório de veículo: ${err.message}`);
     }
 
-    await exportLocator.waitFor({ state: 'visible', timeout: 30000 });
-    await exportLocator.scrollIntoViewIfNeeded();
-
-    // as vezes o export abre numa aba nova em vez de disparar o evento de
-    // download direto na mesma pagina - escuta os dois casos ao mesmo tempo
-    const popupPromise = context.waitForEvent('page', { timeout: 60000 }).catch(() => null);
-    const downloadPromise = page.waitForEvent('download', { timeout: 60000 }).catch(() => null);
-    await exportLocator.click();
-
-    let download = await downloadPromise;
-    if (!download) {
-      const popup = await popupPromise;
-      if (popup) download = await popup.waitForEvent('download', { timeout: 15000 }).catch(() => null);
-    }
-
-    if (!download) {
-      fs.mkdirSync(DEBUG_DIR, { recursive: true });
-      const shot = path.join(DEBUG_DIR, `falha_${Date.now()}.png`);
-      await page.screenshot({ path: shot, fullPage: true }).catch(() => {});
-      throw new Error(`Download nao iniciou a tempo. Print salvo em ${shot} para investigar.`);
-    }
-
-    fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
-    const dateStamp = new Date().toISOString().slice(0, 10);
-    const savedPath = path.join(DOWNLOAD_DIR, `monitoramento_${dateStamp}.xlsx`);
-    await download.saveAs(savedPath);
-
-    // "latest.xlsx" e sempre a copia mais recente, e o que o dashboard le
-    const latestPath = path.join(DOWNLOAD_DIR, 'latest.xlsx');
-    fs.copyFileSync(savedPath, latestPath);
-
-    log(onProgress, 'Planilha baixada com sucesso.');
-    return { ok: true, file: savedPath, timestamp: new Date().toISOString() };
+    return {
+      ok: true,
+      file: monitoramentoResult.savedPath,
+      veiculoFile: veiculoResult ? veiculoResult.savedPath : null,
+      timestamp: new Date().toISOString(),
+    };
   } catch (err) {
     log(onProgress, `Erro: ${err.message}`);
     return { ok: false, error: err.message };

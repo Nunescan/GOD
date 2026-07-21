@@ -24,7 +24,8 @@ GOD/
 │   ├── dashboard.html         # Monitoramento (KPIs, tabela)
 │   ├── mapa.html               # Mapa em tempo real
 │   ├── cte.html                 # Painel do CT-e (CZAR): rodar/parar + log
-│   └── settings.html             # Credenciais, senha do painel e atalhos
+│   ├── settings.html             # Credenciais, senha do painel e atalhos
+│   └── data/br-states-topo.json   # Fronteiras dos estados (mapa) - dado estático
 ├── config/
 │   ├── launcher.example.json  # Modelo de atalhos (vai pro git)
 │   ├── launcher.json           # Seus atalhos de verdade (não vai pro git)
@@ -85,15 +86,34 @@ estiver ligado.
 
 Pra sair (ex: antes de sair da mesa), clique no ⏻ no canto superior direito.
 
-> **Sobre o mapa:** o Ravex parou de fornecer coordenadas precisas de posição, então
-> o mapa deixou de ser prioridade e não está mais recebendo ajustes - ele continua
-> funcionando com o que der (geocodificação por texto), mas não é mais o foco.
+> **Sobre o mapa:** o relatório de Monitoramento não traz mais coordenadas precisas,
+> mas o relatório **Informações do Veículo** traz - o painel cruza os dois pela
+> SPE/Programação de Transporte e usa a coordenada exata sempre que disponível (veja
+> "Duas planilhas" abaixo). Quando a posição é exata, aparece um selo **📍 precisa**
+> no mapa. As fronteiras dos estados aparecem como uma linha bem fraca, só pra dar
+> referência visual.
 
 ## Como a automação funciona
 
 `automation/ravexClient.js` usa o [Playwright](https://playwright.dev) pra controlar um
-navegador de verdade: login → busca "monitoramento" no menu → clica em "Exportar todos
-os dados" → salva o arquivo em `data/downloads/`.
+navegador de verdade, numa única sessão logada: login → busca "monitoramento" no menu
+→ exporta → abre `/relatorio-informacoes-veiculo` direto pela URL → exporta de novo.
+Os dois arquivos vão pra `data/downloads/` (`latest.xlsx` e `veiculos-latest.xlsx`).
+
+### Duas planilhas, uma junção
+
+- **Monitoramento** (`latest.xlsx`): origem, destino, status, posição atual (texto) -
+  a mesma de sempre.
+- **Informações do Veículo** (`veiculos-latest.xlsx`): tem a SPE/Programação de
+  Transporte na coluna **G** e as coordenadas geográficas na coluna **I** (formato
+  `-25.09380 , -50.20050`). As colunas F/G/H vêm mescladas no cabeçalho do Ravex, então
+  a leitura é por posição de coluna, não por nome (`server/services/veiculoParser.js`).
+
+No reprocessamento (`server/services/pipeline.js`), pra cada linha o painel primeiro
+tenta achar a coordenada exata pela SPE nesse segundo relatório; só cai pra
+geocodificação por texto (Nominatim) se não achar. Se a exportação desse segundo
+relatório falhar por qualquer motivo, a automação não quebra - só fica sem coordenada
+precisa naquela rodada (volta pro texto/geocodificação, como antes).
 
 Se falhar, use o botão **"👁️ Ver funcionando (modo visível)"** em Configurações - ele
 roda a automação de novo, mas com o navegador aparecendo na tela, pra você acompanhar
@@ -149,6 +169,11 @@ coluna não for reconhecida, adicione a palavra-chave correspondente nessa const
   de rota usa o servidor de demonstração do [OSRM](https://project-osrm.org) - ambos
   gratuitos e sem chave, com uso respeitando o limite de ~1 req/seg deles. Resultados
   ficam em cache em `data/cache/` pra não repetir buscas.
+- As fronteiras dos estados no mapa vêm de um TopoJSON simplificado de domínio público
+  ([gist de ppKrauss](https://gist.github.com/ppKrauss/0c33364240e841fa23e78b21005f792c)),
+  já salvo localmente em `public/data/br-states-topo.json` (8KB) - servido pelo próprio
+  painel, sem depender do gist em tempo de execução (só a biblioteca `topojson-client`,
+  que converte o arquivo, vem de CDN - igual ao Leaflet).
 - `npm audit` mostra uma vulnerabilidade moderada indireta (via `uuid`, dependência do
   `exceljs`) sem correção estável disponível ainda; risco baixo pro uso deste projeto
   (não expõe rede, uso pessoal).

@@ -26,6 +26,19 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   maxZoom: 19,
 }).addTo(map);
 
+// fronteiras dos estados brasileiros - so linha bem fraca separando, sem
+// preenchimento, e sem interceptar clique (fica "atras" dos marcadores)
+fetch('data/br-states-topo.json')
+  .then((res) => res.json())
+  .then((topology) => {
+    const geo = topojson.feature(topology, topology.objects.estados);
+    L.geoJSON(geo, {
+      interactive: false,
+      style: { color: '#ffffff', weight: 1, opacity: 0.16, fillOpacity: 0 },
+    }).addTo(map);
+  })
+  .catch((err) => console.error('Não foi possível carregar as fronteiras dos estados:', err));
+
 const markersLayer = L.layerGroup().addTo(map);
 const routeLayer = L.layerGroup().addTo(map);
 
@@ -79,7 +92,7 @@ async function selectPoint(p) {
     <div class="row"><span class="k">Motorista</span><span>${p.motorista || '-'}</span></div>
     <div class="row"><span class="k">Origem</span><span>${p.origem || '-'}</span></div>
     <div class="row"><span class="k">Destino</span><span>${p.destino || '-'}</span></div>
-    <div class="row"><span class="k">Posição atual</span><span>${p.posicaoAtual || '-'}</span></div>
+    <div class="row"><span class="k">Posição atual</span><span>${p.posicaoAtual || '-'} ${p.posicaoPrecisa ? '<span class="badge good" title="Coordenada exata do relatório de veículo">📍 precisa</span>' : ''}</span></div>
     <div class="row"><span class="k">Falta para chegar</span><span>calculando...</span></div>
   `;
 

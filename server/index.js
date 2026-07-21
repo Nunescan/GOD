@@ -105,6 +105,7 @@ app.get('/api/map', (req, res) => {
       posicaoAtual: r.posicaoAtual,
       lat: r.posicaoAtualGeo.lat,
       lng: r.posicaoAtualGeo.lng,
+      posicaoPrecisa: r.posicaoAtualGeo.source === 'veiculo',
       origemGeo: r.origemGeo,
       destinoGeo: r.destinoGeo,
       previsaoChegada: r.previsaoChegada,
