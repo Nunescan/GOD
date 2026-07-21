@@ -30,15 +30,6 @@
 
 <div class="page">
 
-  <div class="status-strip">
-    <div class="info">Status: <b id="statusLabel">verificando...</b></div>
-    <div class="info">Iniciado em: <b id="startedAt">--</b></div>
-    <div class="nav-spacer"></div>
-    <button class="btn" id="startBtn">▶️ Rodar CZAR</button>
-    <button class="btn secondary" id="stopBtn" style="display:none;">⏹️ Parar</button>
-    <button class="btn secondary" id="openBtn" style="display:none;">↗️ Abrir CZAR</button>
-  </div>
-
   <div class="card" id="notInstalledCard" style="display:none;">
     <div class="section-title">Ambiente não configurado</div>
     <p class="hint">
@@ -47,10 +38,157 @@
     </p>
   </div>
 
-  <div class="card">
-    <div class="section-title">Log de execução</div>
-    <div class="table-wrap" style="max-height: none;">
-      <pre id="logView" style="margin:0; padding:16px; font-family: ui-monospace, Consolas, monospace; font-size:12px; line-height:1.6; white-space:pre-wrap; color: var(--text-secondary);"></pre>
+  <div class="nav-links" style="background:var(--surface-1); border:1px solid var(--border); border-radius: var(--radius); padding:6px; width:fit-content;">
+    <button class="nav-link tab-btn active" data-tab="tab-dashboard">📊 Dashboard</button>
+    <button class="nav-link tab-btn" data-tab="tab-coleta">📧 Coleta</button>
+    <button class="nav-link tab-btn" data-tab="tab-processar">📁 Processar</button>
+    <button class="nav-link tab-btn" data-tab="tab-relatorio">📑 Relatório</button>
+    <button class="nav-link tab-btn" data-tab="tab-log">🖥️ Log</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="tab-panel" id="tab-dashboard">
+    <div class="card">
+      <div class="section-title">Dashboard de um relatório de CT-e</div>
+      <div class="input-with-btn">
+        <input type="text" id="dashFilePath" placeholder="Escolha o arquivo .xlsx do relatório..." readonly>
+        <button type="button" class="btn secondary" id="dashPickBtn">📄 Procurar arquivo</button>
+        <button type="button" class="btn" id="dashLoadBtn">Carregar</button>
+      </div>
+      <div class="hint" id="dashMsg" style="margin-top:8px;"></div>
+    </div>
+
+    <div id="dashContent" style="display:none;">
+      <div class="kpi-grid" id="dashKpis"></div>
+
+      <div class="hero-grid" style="margin-top:20px;">
+        <div class="card">
+          <div class="section-title">Top 10 destinos</div>
+          <div id="dashTopDestinos"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Top 10 valores de mercadoria</div>
+          <div id="dashTopValores"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="section-title">Top 10 containers</div>
+        <div id="dashTopContainers"></div>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="section-title">CTEs por data</div>
+        <div id="dashPorData"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLETA -->
+  <div class="tab-panel" id="tab-coleta" style="display:none;">
+    <div class="card">
+      <div class="section-title">Vincular pastas do Outlook aos armadores</div>
+      <div class="form-actions" style="margin-bottom:14px;">
+        <button type="button" class="btn secondary" id="scanOutlookBtn">📧 Escanear pastas do Outlook</button>
+        <span class="hint" id="scanMsg"></span>
+      </div>
+      <div id="vinculosForm"></div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="saveVinculosBtn">Salvar vínculos</button>
+        <span class="save-msg" id="vinculosMsg"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Rodar coleta</div>
+      <div class="field-row">
+        <div class="field" style="max-width:200px;">
+          <label for="diasInput">Período (dias)</label>
+          <input type="number" id="diasInput" value="9999" min="1">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="coletarBtn">🔥 Coletar agora</button>
+        <span class="hint">Baixa os anexos (PDF/XML/ZIP/EML) de cada pasta vinculada, direto do Outlook.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROCESSAR -->
+  <div class="tab-panel" id="tab-processar" style="display:none;">
+    <div class="card">
+      <div class="section-title">Processar arquivos (renomear e organizar)</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="procArmador">Armador</label>
+          <select id="procArmador">
+            <option value="alianca">Aliança</option>
+            <option value="mercosul">Mercosul</option>
+            <option value="norcoast">Norcoast</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Pasta de origem (onde estão os PDFs/XMLs baixados)</label>
+        <div class="input-with-btn">
+          <input type="text" id="procOrigem" readonly placeholder="Ex: cte-czar/downloads/CTEs/Aliança">
+          <button type="button" class="btn secondary" id="procOrigemBtn">📁 Procurar pasta</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Pasta de destino (opcional - padrão: processados/&lt;armador&gt;/lote_atual)</label>
+        <div class="input-with-btn">
+          <input type="text" id="procDestino" readonly placeholder="Deixe em branco para usar o padrão">
+          <button type="button" class="btn secondary" id="procDestinoBtn">📁 Procurar pasta</button>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="processarBtn">🔍 Processar arquivos</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RELATORIO -->
+  <div class="tab-panel" id="tab-relatorio" style="display:none;">
+    <div class="card">
+      <div class="section-title">Gerar relatório Excel</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="relArmador">Armador</label>
+          <select id="relArmador">
+            <option value="alianca">Aliança</option>
+            <option value="mercosul">Mercosul</option>
+            <option value="norcoast">Norcoast</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Pasta já processada</label>
+        <div class="input-with-btn">
+          <input type="text" id="relPasta" readonly placeholder="Ex: cte-czar/processados/alianca/lote_atual">
+          <button type="button" class="btn secondary" id="relPastaBtn">📁 Procurar pasta</button>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="relatorioBtn">📑 Gerar relatório</button>
+      </div>
+      <div class="hint" id="relResultMsg" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="tab-panel" id="tab-log" style="display:none;">
+    <div class="status-strip">
+      <div class="info">Status: <b id="statusLabel">verificando...</b></div>
+      <div class="info">Comando: <b id="commandLabel">--</b></div>
+      <div class="nav-spacer"></div>
+      <button class="btn secondary" id="stopBtn" style="display:none;">⏹️ Parar</button>
+    </div>
+    <div class="card">
+      <div class="section-title">Log de execução</div>
+      <div class="table-wrap" style="max-height: none;">
+        <pre id="logView" style="margin:0; padding:16px; font-family: ui-monospace, Consolas, monospace; font-size:12px; line-height:1.6; white-space:pre-wrap; color: var(--text-secondary);"></pre>
+      </div>
     </div>
   </div>
 

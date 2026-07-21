@@ -140,6 +140,14 @@ a { color: inherit; text-decoration: none; }
 .nav-link:hover { background: var(--surface-2); color: var(--text-primary); }
 .nav-link.active { background: var(--accent-soft); color: var(--accent); }
 
+/* reset de botao pra abas que reaproveitam o visual de .nav-link */
+button.nav-link {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
 .nav-spacer { flex: 1; }
 
 .nav-clock {

@@ -15,15 +15,16 @@ GOD/
 ├── automation/          # Playwright: login + exportação da planilha do Ravex
 ├── server/
 │   ├── middleware/        # Autenticação (sessão/cookie do painel)
-│   ├── routes/             # Rotas HTTP (auth, settings, launcher)
-│   ├── services/            # Regras de negócio (settings, excel, geocoding, rotas, picker)
+│   ├── routes/             # Rotas HTTP (auth, settings, launcher, cte)
+│   ├── services/            # Regras de negócio (settings, excel, geocoding, rotas,
+│   │                          picker, veiculoParser, auxReportParser, cteRunner, cteDashboard)
 │   └── index.js             # Ponto de entrada do servidor
 ├── public/               # Frontend (HTML/CSS/JS puro, sem build)
 │   ├── login.html           # Tela de senha (primeiro acesso cria a senha)
 │   ├── index.html            # Página inicial ("modo gamer")
 │   ├── dashboard.html         # Monitoramento (KPIs, tabela)
 │   ├── mapa.html               # Mapa em tempo real
-│   ├── cte.html                 # Painel do CT-e (CZAR): rodar/parar + log
+│   ├── cte.html                 # Painel do CT-e: dashboard, coleta, processar, relatório, log
 │   ├── settings.html             # Credenciais, senha do painel e atalhos
 │   └── data/br-states-topo.json   # Fronteiras dos estados (mapa) - dado estático
 ├── config/
@@ -34,8 +35,10 @@ GOD/
 ├── data/
 │   ├── downloads/         # Planilhas baixadas do Ravex (não vai pro git)
 │   └── cache/               # Dados já processados/geocodificados (não vai pro git)
-├── cte-czar/              # Programa "CZAR" (Streamlit) de análise de CT-e - já existia,
-│                            # so foi organizado aqui dentro (venv/dados não vão pro git)
+├── cte-czar/              # Programa de análise de CT-e - engines por armador +
+│   ├── cli.py               # cli.py (um único ponto de entrada, chamado pelo painel)
+│   ├── modules/               # Engines (Aliança/Mercosul/Norcoast/Login/Coleta) - o que já existia
+│   └── config/vinculos.json    # Pasta do Outlook <-> armador (não vai pro git)
 ├── scripts/               # Scripts .bat de instalação e atalho
 └── docs/
 ```
@@ -70,19 +73,21 @@ abrir Monitoramento e baixar a planilha automaticamente. Isso também roda sozin
 cada 10 minutos (ajustável em `AUTO_REFRESH_MINUTES` no `.env`) enquanto o servidor
 estiver ligado.
 
-- **Dashboard**: KPIs (total, em trânsito, entregues, atrasados) + tabela completa,
-  com busca.
+- **Dashboard**: KPIs (total, em trânsito, entregues, atrasados) + tabela completa
+  (cavalo, carreta, motorista, transportadora, datas...), com busca. Clique numa
+  linha pra expandir e ver **todas** as colunas originais da planilha, incluindo o
+  que vier vinculado da Situação Cadastral e da Alocação.
 - **Mapa**: posição atual de cada carga, atualizando junto com os dados. Buscar por
-  uma Programação de Transporte (na home ou no mapa) centraliza nela, traça a rota
-  até o destino e mostra a distância/tempo restante.
-- **Configurações**: credenciais do Ravex, senha do painel, e o gerenciador de
-  atalhos (nome, ícone e caminho - com botões "Procurar arquivo"/"Procurar pasta"
-  que abrem o seletor nativo do Windows, então você nunca precisa digitar o caminho
-  na mão).
-
-- **CT-e**: liga/desliga o programa CZAR (análise de CT-e) e mostra o log completo
-  de tudo que acontece nele (progresso, erros) em tempo real, sem precisar abrir
-  terminal nenhum. Veja a seção própria abaixo.
+  uma Programação de Transporte (na home ou no mapa) destaca esse caminhão (anel
+  dourado) e esconde os demais, traça a rota até o destino, mostra a distância/tempo
+  restante e abre um painel do lado com **todas** as informações da carga (cavalo,
+  carreta, motorista, transportadora, mais tudo que vier dos outros relatórios).
+- **Configurações**: credenciais do Ravex, senha do painel, mapeamento de colunas e
+  o gerenciador de atalhos (nome, ícone e caminho - com botões "Procurar
+  arquivo"/"Procurar pasta" que abrem o seletor nativo do Windows, então você nunca
+  precisa digitar o caminho na mão).
+- **CT-e**: dashboard nativo + coleta/processamento/relatório do CZAR direto no
+  painel, com log ao vivo. Veja a seção própria abaixo.
 
 Pra sair (ex: antes de sair da mesa), clique no ⏻ no canto superior direito.
 
@@ -97,23 +102,31 @@ Pra sair (ex: antes de sair da mesa), clique no ⏻ no canto superior direito.
 
 `automation/ravexClient.js` usa o [Playwright](https://playwright.dev) pra controlar um
 navegador de verdade, numa única sessão logada: login → busca "monitoramento" no menu
-→ exporta → abre `/relatorio-informacoes-veiculo` direto pela URL → exporta de novo.
-Os dois arquivos vão pra `data/downloads/` (`latest.xlsx` e `veiculos-latest.xlsx`).
+→ exporta → depois abre, direto pela URL, mais três relatórios e exporta cada um -
+**Informações do Veículo**, **Situação Cadastral** e **Alocação/Programação de
+Transporte**. Cada exportação extra é isolada: se uma falhar, as outras (e o
+Monitoramento) continuam normalmente. Os arquivos vão pra `data/downloads/`
+(`latest.xlsx`, `veiculos-latest.xlsx`, `situacao-latest.xlsx`, `alocacao-latest.xlsx`).
 
-### Duas planilhas, uma junção
+### Quatro planilhas, uma junção
 
-- **Monitoramento** (`latest.xlsx`): origem, destino, status, posição atual (texto) -
-  a mesma de sempre.
-- **Informações do Veículo** (`veiculos-latest.xlsx`): tem a SPE/Programação de
-  Transporte na coluna **G** e as coordenadas geográficas na coluna **I** (formato
-  `-25.09380 , -50.20050`). As colunas F/G/H vêm mescladas no cabeçalho do Ravex, então
+- **Monitoramento** (`latest.xlsx`): origem, destino, status, posição atual, cavalo
+  (placa), carreta - a base de tudo.
+- **Informações do Veículo** (`veiculos-latest.xlsx`): SPE/Programação de Transporte
+  na coluna **G** e coordenadas geográficas na coluna **I** (formato
+  `-25.09380 , -50.20050`) - colunas F/G/H vêm mescladas no cabeçalho do Ravex, então
   a leitura é por posição de coluna, não por nome (`server/services/veiculoParser.js`).
+- **Situação Cadastral** (`situacao-latest.xlsx`) e **Alocação**
+  (`alocacao-latest.xlsx`): estrutura de colunas ainda não mapeada manualmente, então
+  são lidas de forma genérica - o painel detecta sozinho qual coluna é a Placa (pra
+  Situação Cadastral) ou a SPE (pra Alocação) e vincula automaticamente com o resto
+  dos dados, mantendo todas as colunas originais (`server/services/auxReportParser.js`).
+  Esses campos aparecem prefixados (ex: `[Alocação] Data Alocação`) na seção "mais
+  informações" do mapa e na linha expandida do dashboard.
 
 No reprocessamento (`server/services/pipeline.js`), pra cada linha o painel primeiro
-tenta achar a coordenada exata pela SPE nesse segundo relatório; só cai pra
-geocodificação por texto (Nominatim) se não achar. Se a exportação desse segundo
-relatório falhar por qualquer motivo, a automação não quebra - só fica sem coordenada
-precisa naquela rodada (volta pro texto/geocodificação, como antes).
+tenta achar a coordenada exata pela SPE no relatório de veículo; só cai pra
+geocodificação por texto (Nominatim) se não achar.
 
 Se falhar, use o botão **"👁️ Ver funcionando (modo visível)"** em Configurações - ele
 roda a automação de novo, mas com o navegador aparecendo na tela, pra você acompanhar
@@ -122,32 +135,63 @@ tela no momento da falha fica salvo em `data/downloads/debug/`.
 
 ## CT-e (CZAR)
 
-`cte-czar/` é o programa de análise de CT-e (Streamlit) que você já tinha feito -
-organizamos ele dentro do projeto, corrigimos um bug de caminho fixo (apontava pro
-perfil de usuário `caanunes` de outro PC, quebrando o OCR de login) e criamos um
-jeito de rodar ele direto pelo painel, sem terminal.
+`cte-czar/` é o programa de análise de CT-e que você já tinha feito, por armador
+(Aliança, Mercosul, Norcoast) - **não roda mais como um app Streamlit separado, numa
+aba/porta própria**. A essência de cada página virou um único CLI Python
+(`cte-czar/cli.py`, comandos `processar` / `relatorio` / `coletar` / `pastas-outlook`),
+chamado pelo painel sob demanda. Tudo aparece dentro da aba **CT-e** do painel, em
+5 sub-abas:
+
+- **Dashboard**: escolha um relatório Excel já gerado (botão "Procurar arquivo", sem
+  precisar arrastar nada) e veja os KPIs e gráficos (total de CTEs, valor de
+  mercadoria, frete, containers, top 10 destinos/valores, CTEs por data) - a mesma
+  análise que o antigo `main.py` mostrava, recalculada nativamente pelo painel
+  (`server/services/cteDashboard.js`), sem depender de Python pra essa parte.
+- **Coleta**: escaneia as pastas do Outlook, deixa vincular cada uma a um armador
+  (salvo em `cte-czar/config/vinculos.json`) e baixa os anexos (PDF/XML/ZIP/EML) com
+  um botão.
+- **Processar**: escolhe a pasta com os PDFs/XMLs baixados (seletor nativo do
+  Windows) e organiza/renomeia tudo por CTE/container.
+- **Relatório**: gera o Excel consolidado a partir de uma pasta já processada.
+- **Log**: mostra ao vivo tudo que o comando em execução está fazendo (e o resultado,
+  quando termina) - sem precisar abrir terminal nenhum.
 
 **Primeira vez:** dê 2 cliques em `scripts\instalar-cte.bat` (cria o ambiente Python
-isolado e instala as dependências - streamlit, pandas, plotly, opencv, etc). Depois
-disso, use o botão **"▶️ Rodar CZAR"** na aba **CT-e** do painel: ele liga o programa
-em segundo plano, mostra tudo que acontece no **log de execução** ali na tela, e o
-botão **"↗️ Abrir CZAR"** abre o dashboard dele (upload de planilha, gráficos por
-armador - Aliança/Mercosul/Norcoast) numa aba nova.
+isolado em `cte-czar/venv` e instala as dependências - pandas, openpyxl, opencv,
+pywin32, etc).
 
-Testamos todas as páginas (Aliança, Mercosul, Norcoast, Login, Coleta, Configuração)
-e nenhuma apresentou erro nesta máquina.
+Bugs corrigidos ao organizar isso:
+- `modules/login_engine/login_engine.py` tinha os caminhos do Tesseract-OCR e do
+  Poppler fixos pro perfil `caanunes` de outro PC - agora usam variável de ambiente
+  com fallback pro PATH do sistema.
+- `modules/download_anexos.py`: o filtro de "período (dias)" na Coleta nunca era
+  aplicado de verdade, e havia um limite escondido de 999 itens por pasta que
+  descartava o resto silenciosamente. Corrigido - agora ordena por data, respeita o
+  período pedido de verdade e processa a pasta inteira dentro do período.
+- Todo `print()` com emoji quebrava quando o Python era chamado como processo filho
+  no Windows (codificação padrão não aceita emoji fora de um console de verdade) -
+  `cli.py` força UTF-8 na saída.
 
-> A leitura automática de número de CT-e por OCR (aba **Login** do CZAR) precisa do
-> Tesseract-OCR instalado no Windows - **ainda não está instalado nesta máquina**.
-> As demais abas não dependem disso. Instruções de instalação aparecem no final do
-> `instalar-cte.bat`.
+> A leitura automática de número de CT-e por OCR (usada dentro do processamento de
+> alguns armadores) precisa do Tesseract-OCR instalado no Windows - **ainda não está
+> instalado nesta máquina**. Instruções aparecem no final do `instalar-cte.bat`.
+> A página de Configuração do CZAR (modelo de template pra OCR) ainda não foi portada
+> pro painel nesta rodada.
 
 ## Se as colunas da planilha tiverem nomes diferentes
 
 O sistema tenta reconhecer as colunas automaticamente (`server/services/excelParser.js`,
 constante `FIELD_KEYWORDS`) por palavras-chave, então pequenas variações no nome do
 cabeçalho (ex: "Posição Atual" vs "Posição atual do veículo") já são cobertas. Se uma
-coluna não for reconhecida, adicione a palavra-chave correspondente nessa constante.
+coluna não for reconhecida - ou for reconhecida errada -, ajuste em **Configurações →
+Mapeamento de colunas** (sem precisar mexer em código), ou adicione a palavra-chave
+certa em `FIELD_KEYWORDS`.
+
+> Cuidado ao adicionar palavra-chave nova: prefira termos completos a abreviações
+> curtas. Uma keyword como `"eta"` parece segura, mas bate por substring dentro de
+> "carr**eta**" e rouba a coluna errada - foi exatamente esse bug que corrigimos aqui.
+> Cada campo agora tem uma lista `exclude` opcional pra resolver colisões assim (ex:
+> `placa` exclui cabeçalhos que contenham "carreta"/"reboque").
 
 ## Segurança
 
