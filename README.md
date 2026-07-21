@@ -41,13 +41,18 @@ GOD/
 │   └── config/vinculos.json    # Pasta do Outlook <-> armador (não vai pro git)
 ├── scripts/               # Scripts .bat de instalação e atalho
 └── docs/
+    └── comandos-instalacao.txt  # Lista dos comandos de instalação, pra referência manual
 ```
 
 ## Primeira vez usando (nesse PC)
 
-1. Instale o [Node.js](https://nodejs.org) (versão 18 ou mais nova) se ainda não tiver.
-2. Dê 2 cliques em `scripts\instalar.bat` - ele instala tudo (dependências + navegador
-   do Playwright).
+1. Instale o [Node.js](https://nodejs.org) e o [Python](https://python.org) (versões
+   recentes) se ainda não tiver.
+2. Dê 2 cliques em **`scripts\instalar-tudo.bat`** - o instalador único: baixa as
+   dependências do servidor, o navegador do Playwright, e prepara o ambiente Python
+   do CT-e, tudo numa vez só. (Os comandos que ele roda por baixo estão listados em
+   `docs/comandos-instalacao.txt`, caso queira rodar algum na mão ou entender o que
+   acontece.)
 3. Dê 2 cliques em `scripts\abrir-painel.bat`. Na primeira vez, a tela de login vai
    pedir pra você **criar uma senha de acesso ao painel** (isso protege o painel de
    quem passar na sua mesa - sem essa senha, nada abre).

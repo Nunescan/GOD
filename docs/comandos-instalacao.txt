@@ -1,0 +1,78 @@
+COMANDOS DE INSTALACAO - Painel Cesar Augusto
+================================================================
+
+No dia a dia voce NAO precisa rodar nada disso na mao - so dar 2 cliques em
+scripts\instalar-tudo.bat (instala tudo de uma vez) e depois em
+scripts\abrir-painel.bat (uso diario).
+
+Este arquivo e so uma referencia: pra quando quiser rodar um passo especifico
+manualmente, reinstalar so uma parte, ou entender o que o instalador faz por
+baixo dos panos.
+
+
+PRE-REQUISITOS (instale manualmente se ainda nao tiver)
+----------------------------------------------------------------
+  Node.js 18 ou mais novo     https://nodejs.org
+  Python 3.11 ou mais novo     https://python.org
+  (opcional) Tesseract-OCR      https://github.com/UB-Mannheim/tesseract/wiki
+    ^ so necessario se for usar a leitura de numero de CT-e por imagem
+
+
+1) DEPENDENCIAS DO SERVIDOR (Node.js)
+----------------------------------------------------------------
+  npm install
+
+
+2) NAVEGADOR USADO PRA AUTOMATIZAR O LOGIN NO RAVEX (Playwright)
+----------------------------------------------------------------
+  npx playwright install chromium
+
+
+3) ARQUIVO DE CONFIGURACAO
+----------------------------------------------------------------
+  copy .env.example .env
+
+  As credenciais do Ravex podem ficar nesse .env OU (mais facil) serem
+  preenchidas depois direto na tela de Configuracoes do painel, que salva
+  em config/secrets.json. Nenhum dos dois vai pro Git.
+
+
+4) AMBIENTE PYTHON ISOLADO DO CT-E (CZAR)
+----------------------------------------------------------------
+  cd cte-czar
+  python -m venv venv
+  venv\Scripts\python.exe -m pip install --upgrade pip
+  venv\Scripts\python.exe -m pip install -r requirements.txt
+  cd ..
+
+
+USO DO DIA A DIA
+----------------------------------------------------------------
+  scripts\abrir-painel.bat
+    Liga o servidor (se nao estiver ligado) e abre o painel numa janela
+    "de app", sem barra de navegador.
+
+
+COMANDOS UTEIS PRA DEPURAR
+----------------------------------------------------------------
+  npm start
+    Roda o servidor com o log aparecendo no terminal (util pra ver erro).
+
+  node --check server\index.js
+    Confere rapido se tem erro de sintaxe no servidor.
+
+  npx playwright install chromium --with-deps
+    Reinstala o navegador do Playwright do zero, se ele corromper.
+
+  cte-czar\venv\Scripts\python.exe cte-czar\cli.py --help
+    Lista os comandos do CT-e (processar, relatorio, coletar, pastas-outlook)
+    pra rodar manualmente, fora do painel, se precisar depurar algo.
+
+
+ONDE FICA CADA COISA
+----------------------------------------------------------------
+  .env                        Credenciais do Ravex (alternativa ao painel) - nunca vai pro Git
+  config/secrets.json          Credenciais + senha do painel (criado pela tela de Configuracoes) - nunca vai pro Git
+  config/launcher.json          Seus atalhos da tela inicial - nunca vai pro Git
+  cte-czar/venv/                 Ambiente Python do CT-e - nunca vai pro Git
+  data/downloads/                  Planilhas baixadas do Ravex - nunca vai pro Git
