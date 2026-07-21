@@ -1,0 +1,6 @@
+[
+  { "id": "outlook", "name": "Outlook", "icon": "📧", "path": "outlook.exe" },
+  { "id": "ravex", "name": "Ravex (site)", "icon": "🌐", "path": "https://longopercurso.sistema.ravex.com.br/login" },
+  { "id": "planilha-programacao", "name": "Programação de Transporte", "icon": "📊", "path": "C:\\Users\\User\\Desktop\\Planilha Programacao.xlsx" },
+  { "id": "pasta-downloads", "name": "Pasta de Planilhas Baixadas", "icon": "📁", "path": "C:\\Users\\User\\Desktop\\GOD\\data\\downloads" }
+]

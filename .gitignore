@@ -1,0 +1,25 @@
+# Dependencias
+node_modules/
+
+# Credenciais - NUNCA suba isso pro GitHub
+.env
+
+# Dados baixados da planilha (tem informacao interna da empresa)
+data/downloads/*
+!data/downloads/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Playwright
+test-results/
+playwright-report/
+
+# SO / editores
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp

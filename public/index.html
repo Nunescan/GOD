@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Ravex</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">🚛 Painel Ravex</div>
+  <div class="nav-links">
+    <a class="nav-link active" href="index.html">Início</a>
+    <a class="nav-link" href="dashboard.html">Monitoramento</a>
+    <a class="nav-link" href="mapa.html">Mapa</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-clock">
+    <div id="clock"></div>
+    <div id="dateLabel"></div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="welcome">
+    <div>
+      <div class="clock-big" id="clockBig"></div>
+      <div class="date-small" id="dateBig"></div>
+    </div>
+    <div class="status-strip" id="statusStrip">
+      <button class="btn" id="runBtn">🔄 Atualizar monitoramento</button>
+      <div class="info">Última atualização: <b id="lastUpdate">--</b></div>
+      <div class="log-line" id="logLine"></div>
+    </div>
+  </div>
+
+  <div class="search-box">
+    <span class="search-icon">🔎</span>
+    <input id="searchInput" type="text" placeholder="Buscar por Programação de Transporte, placa, motorista, origem ou destino...">
+  </div>
+
+  <div>
+    <div class="section-title">Acesso rápido</div>
+    <div class="hero-grid">
+      <div class="hero-card" onclick="window.location.href='dashboard.html'">
+        <div class="icon">📊</div>
+        <div>
+          <div class="title">Dashboard</div>
+          <div class="subtitle">Visão geral de cargas e caminhões</div>
+        </div>
+      </div>
+      <div class="hero-card" onclick="window.location.href='mapa.html'">
+        <div class="icon">🗺️</div>
+        <div>
+          <div class="title">Mapa em tempo real</div>
+          <div class="subtitle">Posição atual de toda a frota</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-title">Programas e planilhas</div>
+    <div class="launcher-grid" id="launcherGrid"></div>
+  </div>
+
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>

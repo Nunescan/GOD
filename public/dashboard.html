@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoramento - Painel Ravex</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">🚛 Painel Ravex</div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">Início</a>
+    <a class="nav-link active" href="dashboard.html">Monitoramento</a>
+    <a class="nav-link" href="mapa.html">Mapa</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-clock">
+    <div id="clock"></div>
+    <div id="dateLabel"></div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="search-box">
+    <span class="search-icon">🔎</span>
+    <input id="searchInput" type="text" placeholder="Buscar por Programação de Transporte, placa, motorista, origem ou destino...">
+  </div>
+
+  <div class="status-strip">
+    <div class="info">Última atualização: <b id="lastUpdate">--</b></div>
+    <div class="nav-spacer"></div>
+    <button class="btn secondary" id="reprocessBtn">↻ Reprocessar planilha</button>
+    <button class="btn" id="runBtn">🔄 Atualizar monitoramento</button>
+  </div>
+
+  <div>
+    <div class="section-title">Resumo</div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Distribuição por status</div>
+    <div id="statusBars"></div>
+  </div>
+
+  <div>
+    <div class="section-title">Cargas</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Programação</th>
+            <th>Status</th>
+            <th>Placa</th>
+            <th>Motorista</th>
+            <th>Transportadora</th>
+            <th>Origem</th>
+            <th>Destino</th>
+            <th>Posição atual</th>
+            <th>Previsão chegada</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">
+        Nenhum dado ainda. Clique em "Atualizar monitoramento" para baixar a planilha do Ravex,
+        ou solte um arquivo .xlsx em <code>data/downloads/latest.xlsx</code> e clique em "Reprocessar".
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>
