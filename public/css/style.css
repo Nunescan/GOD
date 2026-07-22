@@ -42,6 +42,9 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
+  /* fundo tambem no html (nao so no body) pra nao mostrar um branco padrao
+     do navegador durante o repaint de um resize/maximizar de janela real */
+  background: var(--page);
 }
 
 body {

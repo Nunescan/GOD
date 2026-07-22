@@ -11,14 +11,12 @@ const SEARCH_SELECTOR = 'input[placeholder="Pesquisar no menu"]';
 const EXPORT_SELECTOR = '[aria-label="Exportar todos os dados"], span:has-text("Exportar todos os dados")';
 const OVERFLOW_SELECTOR = '.dx-toolbar-menu-container .dx-button, .dx-dropdownmenu-button';
 const VEICULO_URL = 'https://longopercurso.sistema.ravex.com.br/relatorio-informacoes-veiculo';
-const SITUACAO_URL = 'https://longopercurso.sistema.ravex.com.br/situacao-consulta-cadastral-veiculo';
 const ALOCACAO_URL = 'https://longopercurso.sistema.ravex.com.br/programacao-transporte';
 
 // relatorios extras: cada um e uma URL direta + exporta igual ao Monitoramento.
 // Se algum falhar, nao derruba os outros - so fica sem aquele dado nessa rodada.
 const EXTRA_REPORTS = [
   { url: VEICULO_URL, savePrefix: 'veiculos', latestName: 'veiculos-latest.xlsx', label: 'informações do veículo (coordenadas)' },
-  { url: SITUACAO_URL, savePrefix: 'situacao', latestName: 'situacao-latest.xlsx', label: 'situação cadastral' },
   { url: ALOCACAO_URL, savePrefix: 'alocacao', latestName: 'alocacao-latest.xlsx', label: 'programação de transporte (alocação)' },
 ];
 

@@ -16,4 +16,6 @@ if %errorlevel%==0 (
 )
 
 REM tenta abrir no Edge (vem com o Windows); se preferir Chrome, troque "msedge" por "chrome"
-start msedge --app=http://localhost:%PORT%/index.html
+REM --start-fullscreen abre direto em tela cheia real (igual apertar F11), sem
+REM precisar maximizar na mao
+start msedge --app=http://localhost:%PORT%/index.html --start-fullscreen
