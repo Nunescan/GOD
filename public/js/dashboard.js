@@ -67,6 +67,23 @@ function renderStatusBreakdown(rows) {
   `).join('');
 }
 
+// estimativa "de fisica basica" (distancia em linha reta / velocidade media)
+// calculada pra toda carga no servidor (pipeline.js) - so formata pra exibir aqui
+function formatEstimativa(est) {
+  if (!est) return '-';
+  let tempo;
+  if (est.horasRestantes < 1) {
+    tempo = `${Math.round(est.horasRestantes * 60)} min`;
+  } else if (est.horasRestantes >= 24) {
+    const dias = Math.floor(est.horasRestantes / 24);
+    const horas = Math.round(est.horasRestantes % 24);
+    tempo = `${dias}d ${horas}h`;
+  } else {
+    tempo = `${est.horasRestantes}h`;
+  }
+  return `${est.distanciaKm} km · ~${tempo}`;
+}
+
 function outrasInfosRow(raw, colspan) {
   const entradas = Object.entries(raw || {}).filter(([, v]) => v !== '' && v !== null && v !== undefined);
   if (entradas.length === 0) return '';
@@ -83,7 +100,7 @@ function outrasInfosRow(raw, colspan) {
 
 function renderTable(rows) {
   emptyState.style.display = rows.length === 0 ? 'block' : 'none';
-  const COLSPAN = 11;
+  const COLSPAN = 12;
   tableBody.innerHTML = rows.map((r) => {
     const cls = classifyStatus(r.status);
     return `
@@ -99,6 +116,7 @@ function renderTable(rows) {
         <td>${r.posicaoAtual || '-'}</td>
         <td>${r.dataSaida || '-'}</td>
         <td>${r.previsaoChegada || '-'}</td>
+        <td>${formatEstimativa(r.estimativa)}</td>
       </tr>
       ${outrasInfosRow(r.raw, COLSPAN)}
     `;

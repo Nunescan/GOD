@@ -3,19 +3,28 @@ const path = require('path');
 const { normalizeRows } = require('./excelParser');
 const { geocodeText } = require('./geocode');
 const { readVeiculoCoords } = require('./veiculoParser');
+const { readEspelhamentoCoords } = require('./espelhamentoParser');
 const { readAuxReport } = require('./auxReportParser');
+const { haversineKm } = require('./route');
 
 const DOWNLOADS_DIR = path.resolve(__dirname, '../../data/downloads');
 const LATEST_XLSX = path.join(DOWNLOADS_DIR, 'latest.xlsx');
 const VEICULO_XLSX = path.join(DOWNLOADS_DIR, 'veiculos-latest.xlsx');
 const SITUACAO_XLSX = path.join(DOWNLOADS_DIR, 'situacao-latest.xlsx');
 const ALOCACAO_XLSX = path.join(DOWNLOADS_DIR, 'alocacao-latest.xlsx');
+const ESPELHAMENTO_XLSX = path.join(DOWNLOADS_DIR, 'espelhamento-latest.xlsx');
 const CACHE_JSON = path.resolve(__dirname, '../../data/cache/latest.json');
 const COLUMN_MAP_FILE = path.resolve(__dirname, '../../config/columnMap.json');
 
 // trava de seguranca: nunca deixa uma planilha com dado sujo (ou uma coluna
 // mapeada errada) fazer o reprocessamento demorar horas em buscas de geocoding
 const MAX_GEOCODE_LOOKUPS = 300;
+
+// velocidade media usada so pra estimativa rapida (distancia em linha reta /
+// velocidade) que fica pronta pra todas as cargas de uma vez no cache - igual
+// ao fallback que o mapa ja usa por caminhao (route.js), pra nao ter que
+// chamar rota real (OSRM) centenas de vezes de uma vez so
+const AVG_SPEED_KMH = 60;
 
 function readColumnOverrides() {
   if (!fs.existsSync(COLUMN_MAP_FILE)) return {};
@@ -48,14 +57,15 @@ async function rebuildCache() {
   const overrides = readColumnOverrides();
   const { rows, columnMap, rawHeaders } = await normalizeRows(LATEST_XLSX, overrides);
   const coordsBySpe = await readVeiculoCoords(VEICULO_XLSX);
+  const espelhamentoBySpe = await readEspelhamentoCoords(ESPELHAMENTO_XLSX);
   const situacao = await readAuxReport(SITUACAO_XLSX);
   const alocacao = await readAuxReport(ALOCACAO_XLSX);
 
   const counts = new Map();
   rows.forEach((r) => {
     // so entra na fila de geocoding quem NAO tem coordenada precisa do
-    // relatorio de veiculo pra essa SPE/Programacao de Transporte
-    if (r.posicaoAtual && !coordsBySpe[r.programacao]) {
+    // relatorio de veiculo ou do espelhamento pra essa SPE/Programacao de Transporte
+    if (r.posicaoAtual && !coordsBySpe[r.programacao] && !espelhamentoBySpe[r.programacao]) {
       counts.set(r.posicaoAtual, (counts.get(r.posicaoAtual) || 0) + 1);
     }
     [r.origem, r.destino].forEach((text) => {
@@ -76,7 +86,7 @@ async function rebuildCache() {
 
   let precisas = 0;
   rows.forEach((r) => {
-    const precisa = coordsBySpe[r.programacao];
+    const precisa = coordsBySpe[r.programacao] || espelhamentoBySpe[r.programacao];
     if (precisa) {
       r.posicaoAtualGeo = precisa;
       precisas += 1;
@@ -85,6 +95,21 @@ async function rebuildCache() {
     }
     r.origemGeo = r.origem ? geo[r.origem] || null : null;
     r.destinoGeo = r.destino ? geo[r.destino] || null : null;
+
+    // estimativa rapida (conta basica: distancia em linha reta / velocidade
+    // media) pra toda carga que tenha posicao atual e destino - a estimativa
+    // mais precisa por rota real (OSRM) continua so no clique do mapa (route.js)
+    if (r.posicaoAtualGeo && r.destinoGeo) {
+      const distanciaKm = Math.round(haversineKm(r.posicaoAtualGeo, r.destinoGeo));
+      const horasRestantes = Math.round((distanciaKm / AVG_SPEED_KMH) * 10) / 10;
+      r.estimativa = {
+        distanciaKm,
+        horasRestantes,
+        chegadaPrevista: new Date(Date.now() + horasRestantes * 3600 * 1000).toISOString(),
+      };
+    } else {
+      r.estimativa = null;
+    }
 
     mergeAux(r, situacao.byPlaca[r.placa], 'Situação Cadastral');
     mergeAux(r, alocacao.bySpe[r.programacao], 'Alocação');

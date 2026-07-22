@@ -12,12 +12,14 @@ const EXPORT_SELECTOR = '[aria-label="Exportar todos os dados"], span:has-text("
 const OVERFLOW_SELECTOR = '.dx-toolbar-menu-container .dx-button, .dx-dropdownmenu-button';
 const VEICULO_URL = 'https://longopercurso.sistema.ravex.com.br/relatorio-informacoes-veiculo';
 const ALOCACAO_URL = 'https://longopercurso.sistema.ravex.com.br/programacao-transporte';
+const ESPELHAMENTO_URL = 'https://longopercurso.sistema.ravex.com.br/espelhamento';
 
 // relatorios extras: cada um e uma URL direta + exporta igual ao Monitoramento.
 // Se algum falhar, nao derruba os outros - so fica sem aquele dado nessa rodada.
 const EXTRA_REPORTS = [
   { url: VEICULO_URL, savePrefix: 'veiculos', latestName: 'veiculos-latest.xlsx', label: 'informações do veículo (coordenadas)' },
   { url: ALOCACAO_URL, savePrefix: 'alocacao', latestName: 'alocacao-latest.xlsx', label: 'programação de transporte (alocação)' },
+  { url: ESPELHAMENTO_URL, savePrefix: 'espelhamento', latestName: 'espelhamento-latest.xlsx', label: 'espelhamento (coordenadas)' },
 ];
 
 function log(onProgress, message) {
