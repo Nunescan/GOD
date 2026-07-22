@@ -17,6 +17,9 @@ data/downloads/*
 data/cache/*
 !data/cache/.gitkeep
 
+# Suas notas e agenda - conteudo pessoal, fica so na sua maquina
+data/notas.json
+
 # CT-e (CZAR) - ambiente Python e dados processados (documentos internos).
 # As subpastas de "data" e "processados" sao recriadas sozinhas pelo programa.
 cte-czar/venv/

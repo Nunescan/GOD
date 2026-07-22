@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notas - Cesar Augusto</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="brand-mark">CA</div>
+    <div class="brand-name">CESAR<span class="thin"> AUGUSTO</span></div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">Início</a>
+    <a class="nav-link" href="dashboard.html">Monitoramento</a>
+    <a class="nav-link" href="mapa.html">Mapa</a>
+    <a class="nav-link" href="cte.html">CT-e</a>
+    <a class="nav-link" href="cabotagem.html">Cabotagem</a>
+    <a class="nav-link active" href="notas.html">Notas</a>
+    <a class="nav-link" href="settings.html">Configurações</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-clock">
+    <div id="clock"></div>
+    <div id="dateLabel"></div>
+  </div>
+  <button class="icon-btn" id="logoutBtn" title="Sair">⏻</button>
+</nav>
+
+<div class="page">
+
+  <div class="nav-links" style="background:var(--surface-1); border:1px solid var(--border); border-radius: var(--radius); padding:6px; width:fit-content;">
+    <button class="nav-link tab-btn active" data-tab="tab-notas">📝 Notas</button>
+    <button class="nav-link tab-btn" data-tab="tab-agenda">🗓️ Agenda</button>
+  </div>
+
+  <!-- NOTAS -->
+  <div class="tab-panel" id="tab-notas">
+    <div class="notas-shell">
+      <div class="notas-lista">
+        <button type="button" class="btn" id="novaNotaBtn" style="width:100%; margin-bottom:10px;">+ Nova nota</button>
+        <div id="listaNotas"></div>
+      </div>
+      <div class="notas-editor card">
+        <input type="text" id="notaTitulo" placeholder="Título da nota" class="notas-titulo-input">
+        <textarea id="notaConteudo" placeholder="Escreva aqui..."></textarea>
+        <div class="form-actions" style="margin-top:10px;">
+          <button type="button" class="btn" id="salvarNotaBtn">Salvar</button>
+          <button type="button" class="btn secondary" id="excluirNotaBtn" style="display:none;">🗑️ Excluir</button>
+          <span class="save-msg" id="notaMsg"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AGENDA -->
+  <div class="tab-panel" id="tab-agenda" style="display:none;">
+    <div class="card">
+      <div class="section-title">Adicionar</div>
+      <div class="field-row">
+        <div class="field" style="flex:2;">
+          <label for="agendaTexto">O que precisa fazer/lembrar</label>
+          <input type="text" id="agendaTexto" placeholder="Ex: Ligar pro TI sobre acesso do Ravex">
+        </div>
+        <div class="field" style="max-width:200px;">
+          <label for="agendaData">Data (opcional)</label>
+          <input type="date" id="agendaData">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="addAgendaBtn">+ Adicionar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Sua agenda</div>
+      <div id="listaAgenda"></div>
+      <div class="empty-state" id="agendaVazia" style="display:none;">Nada por aqui ainda.</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/notas.js"></script>
+</body>
+</html>

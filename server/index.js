@@ -12,6 +12,7 @@ const authRoutes = require('./routes/auth');
 const settingsRoutes = require('./routes/settings');
 const cteRoutes = require('./routes/cte');
 const cabotagemRoutes = require('./routes/cabotagem');
+const notasRoutes = require('./routes/notas');
 const activityLog = require('./services/activityLog');
 const schedule = require('./services/schedule');
 const cabotagemDaily = require('./services/cabotagemDaily');
@@ -160,6 +161,7 @@ app.use('/api/launcher', launcherRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/cte', cteRoutes);
 app.use('/api/cabotagem', cabotagemRoutes);
+app.use('/api/notas', notasRoutes);
 
 // binda so em localhost: este servidor guarda dados internos da empresa e
 // nao deve ficar acessivel por outros dispositivos na mesma rede

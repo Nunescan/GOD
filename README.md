@@ -27,8 +27,9 @@ GOD/
 │   ├── mapa.html               # Mapa em tempo real
 │   ├── cte.html                 # Painel do CT-e: dashboard, coleta, processar, relatório, log
 │   ├── cabotagem.html            # Atividades, busca de SPE, verificação diária, e-mails
-│   ├── settings.html              # Credenciais, senha do painel e atalhos
-│   └── data/br-states-topo.json    # Fronteiras dos estados (mapa) - dado estático
+│   ├── notas.html                 # Anotações e agenda
+│   ├── settings.html               # Credenciais, senha do painel e atalhos
+│   └── data/br-states-topo.json     # Fronteiras dos estados (mapa) - dado estático
 ├── config/
 │   ├── launcher.example.json  # Modelo de atalhos (vai pro git)
 │   ├── launcher.json           # Seus atalhos de verdade (não vai pro git)
@@ -248,6 +249,16 @@ Aba nova, com 4 sub-abas:
 > Web/Microsoft Graph exigiria cadastrar um aplicativo no Azure AD da empresa e pedir
 > permissão de acesso ao e-mail - bem mais complexo, e provavelmente precisaria da
 > aprovação do TI. Se um dia isso for necessário, dá pra revisitar.
+
+## Notas
+
+Aba livre pra anotação e agenda, tipo um Notion bem simples (`data/notas.json` -
+nunca vai pro Git, é conteúdo seu):
+
+- **Notas**: lista de notas do lado esquerdo, editor do lado direito (título +
+  texto livre). Cria, edita e exclui.
+- **Agenda**: lista de lembretes/tarefas com data opcional e caixinha de marcar
+  feito - os concluídos ficam riscados e vão pro fim da lista.
 
 ## Se as colunas da planilha tiverem nomes diferentes
 
