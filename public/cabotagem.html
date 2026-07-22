@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cabotagem - Cesar Augusto</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="brand-mark">CA</div>
+    <div class="brand-name">CESAR<span class="thin"> AUGUSTO</span></div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">Início</a>
+    <a class="nav-link" href="dashboard.html">Monitoramento</a>
+    <a class="nav-link" href="mapa.html">Mapa</a>
+    <a class="nav-link" href="cte.html">CT-e</a>
+    <a class="nav-link active" href="cabotagem.html">Cabotagem</a>
+    <a class="nav-link" href="settings.html">Configurações</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-clock">
+    <div id="clock"></div>
+    <div id="dateLabel"></div>
+  </div>
+  <button class="icon-btn" id="logoutBtn" title="Sair">⏻</button>
+</nav>
+
+<div class="page">
+
+  <div class="nav-links" style="background:var(--surface-1); border:1px solid var(--border); border-radius: var(--radius); padding:6px; width:fit-content;">
+    <button class="nav-link tab-btn active" data-tab="tab-atividades">🕘 Atividades</button>
+    <button class="nav-link tab-btn" data-tab="tab-buscar">🔎 Buscar SPEs</button>
+    <button class="nav-link tab-btn" data-tab="tab-diaria">📆 Verificação diária</button>
+    <button class="nav-link tab-btn" data-tab="tab-emails">📧 E-mails</button>
+  </div>
+
+  <!-- ATIVIDADES -->
+  <div class="tab-panel" id="tab-atividades">
+    <div class="card">
+      <div class="section-title">Configurações de horário</div>
+      <div class="field-row">
+        <div class="field" style="max-width:220px;">
+          <label for="autoRefreshInput">Atualizar Ravex a cada (minutos)</label>
+          <input type="number" id="autoRefreshInput" min="1">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="saveScheduleBtn">Salvar</button>
+        <span class="save-msg" id="scheduleMsg"></span>
+      </div>
+      <p class="hint" style="margin-top:10px;">
+        A verificação diária de cabotagem (aba "Verificação diária") roda sozinha uma vez
+        por dia, na primeira vez que o painel é aberto - não precisa de horário fixo.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Tudo que já foi feito</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Quando</th>
+              <th>Tipo</th>
+              <th>O que aconteceu</th>
+              <th>Detalhe</th>
+            </tr>
+          </thead>
+          <tbody id="atividadesBody"></tbody>
+        </table>
+        <div class="empty-state" id="atividadesVazio" style="display:none;">Nenhuma atividade registrada ainda.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUSCAR SPEs -->
+  <div class="tab-panel" id="tab-buscar" style="display:none;">
+    <div class="card">
+      <div class="section-title">Buscar SPEs numa planilha</div>
+      <p class="hint">Escolha uma planilha (ex: a programação de cabotagem), aponte qual coluna
+        tem a SPE, e veja como cada uma está no Ravex agora.</p>
+      <div class="input-with-btn">
+        <input type="text" id="buscarFilePath" readonly placeholder="Escolha a planilha...">
+        <button type="button" class="btn secondary" id="buscarPickBtn">📄 Procurar arquivo</button>
+        <button type="button" class="btn secondary" id="buscarPreviewBtn">Ver colunas</button>
+      </div>
+
+      <div id="buscarColunas" style="display:none; margin-top:14px;">
+        <div class="field-row">
+          <div class="field">
+            <label for="buscarSpeColumn">Coluna da SPE</label>
+            <select id="buscarSpeColumn"></select>
+          </div>
+          <div class="field">
+            <label for="buscarDateColumn">Coluna de data (opcional)</label>
+            <select id="buscarDateColumn">
+              <option value="">(não filtrar por data)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="buscarDateFilter">Filtrar data igual a</label>
+            <input type="date" id="buscarDateFilter">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn" id="buscarRunBtn">🔎 Buscar</button>
+          <span class="hint" id="buscarMsg"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="buscarResultCard" style="display:none;">
+      <div class="section-title">Resultado</div>
+      <div class="kpi-grid" id="buscarKpis" style="margin-bottom:16px;"></div>
+      <div class="form-actions" style="margin-bottom:10px;">
+        <button type="button" class="btn secondary" id="buscarExportBtn">📥 Exportar planilha do resultado</button>
+        <span class="hint" id="buscarExportMsg"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>SPE</th>
+              <th>Alocado?</th>
+              <th>Status</th>
+              <th>Origem</th>
+              <th>Destino</th>
+              <th>Posição atual</th>
+              <th>Cavalo</th>
+              <th>Carreta</th>
+            </tr>
+          </thead>
+          <tbody id="buscarResultBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERIFICACAO DIARIA -->
+  <div class="tab-panel" id="tab-diaria" style="display:none;">
+    <div class="card">
+      <div class="section-title">Configurar</div>
+      <p class="hint">
+        Toda vez que o painel abrir, ele confere sozinho (uma vez por dia) se já rodou
+        hoje - se não, busca o e-mail mais recente dessa pasta com uma planilha em
+        anexo, filtra pela data de hoje, cruza as SPEs com o Ravex, e deixa uma planilha
+        pronta pra você conferir e enviar.
+      </p>
+      <div class="field-row">
+        <div class="field">
+          <label for="diariaPasta">Pasta do Outlook</label>
+          <input type="text" id="diariaPasta" placeholder="Ex: PROGRAMAÇÃO CABOTAGEM">
+        </div>
+        <div class="field">
+          <label for="diariaAssunto">Filtro de assunto (opcional)</label>
+          <input type="text" id="diariaAssunto" placeholder="Ex: cabotagem">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn secondary" id="diariaTestarBtn">1. Testar busca (baixa o anexo mais recente)</button>
+        <span class="hint" id="diariaTestarMsg"></span>
+      </div>
+
+      <div id="diariaColunas" style="display:none; margin-top:14px;">
+        <div class="field-row">
+          <div class="field">
+            <label for="diariaSpeColumn">Coluna da SPE</label>
+            <select id="diariaSpeColumn"></select>
+          </div>
+          <div class="field">
+            <label for="diariaDateColumn">Coluna de data (pra filtrar "hoje")</label>
+            <select id="diariaDateColumn">
+              <option value="">(não filtrar por data)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn" id="diariaSalvarBtn">2. Salvar configuração</button>
+          <span class="save-msg" id="diariaSalvarMsg"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Rodar agora</div>
+      <div class="status-strip">
+        <div class="info">Status: <b id="diariaStatusLabel">--</b></div>
+        <div class="nav-spacer"></div>
+        <button class="btn" id="diariaRodarBtn">🔥 Rodar verificação agora</button>
+      </div>
+      <div class="hint" id="diariaResultMsg" style="margin-top:10px;"></div>
+      <pre id="diariaLog" style="margin-top:10px; padding:14px; background:var(--surface-2); border-radius:var(--radius-sm); font-family: ui-monospace, Consolas, monospace; font-size:12px; line-height:1.6; white-space:pre-wrap; color: var(--text-secondary); max-height:260px; overflow-y:auto;"></pre>
+    </div>
+  </div>
+
+  <!-- EMAILS -->
+  <div class="tab-panel" id="tab-emails" style="display:none;">
+    <div class="card">
+      <div class="section-title">Buscar e-mails</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="emailsPasta">Pasta do Outlook</label>
+          <input type="text" id="emailsPasta" placeholder="Ex: Caixa de Entrada">
+        </div>
+        <div class="field">
+          <label for="emailsPalavras">Palavras-chave (separadas por vírgula)</label>
+          <input type="text" id="emailsPalavras" value="programação, cabotagem">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="emailsBuscarBtn">🔎 Buscar e-mails</button>
+        <span class="hint" id="emailsMsg"></span>
+      </div>
+    </div>
+
+    <div class="card" id="emailsResultCard" style="display:none;">
+      <div class="section-title">Resultado</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Assunto</th>
+              <th>Remetente</th>
+              <th>Recebido em</th>
+              <th>Anexo?</th>
+            </tr>
+          </thead>
+          <tbody id="emailsResultBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/cabotagem.js"></script>
+</body>
+</html>

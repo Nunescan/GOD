@@ -1,6 +1,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const activityLog = require('./activityLog');
 
 // "CZAR" e o programa de CT-e que ja existia antes deste painel - agora e um
 // unico CLI Python (cte-czar/cli.py) chamado por comando, sem servidor
@@ -79,6 +80,12 @@ function run(commandArgs, label) {
     state.lastExitCode = code;
     state.finishedAt = new Date().toISOString();
     pushLog(code === 0 ? 'Concluído com sucesso.' : `Encerrado com erro (código ${code}).`);
+    activityLog.add({
+      tipo: 'cte',
+      titulo: label,
+      detalhe: code === 0 ? 'Concluído com sucesso.' : `Encerrado com erro (código ${code}).`,
+      ok: code === 0,
+    });
     proc = null;
   });
 
@@ -113,6 +120,14 @@ module.exports = {
   ),
   coletar: (dias) => run(['coletar', '--dias', String(dias || 9999)], 'Coleta do Outlook'),
   pastasOutlook: () => run(['pastas-outlook'], 'Escanear pastas do Outlook'),
+  buscarAnexo: (pasta, assunto, destino) => run(
+    ['buscar-anexo', '--pasta', pasta, ...(assunto ? ['--assunto', assunto] : []), '--destino', destino],
+    `Buscar anexo de e-mail - ${pasta}`
+  ),
+  buscarEmails: (pasta, palavras, limite) => run(
+    ['buscar-emails', '--pasta', pasta, ...(palavras ? ['--palavras', palavras] : []), '--limite', String(limite || 50)],
+    `Buscar e-mails - ${pasta}`
+  ),
   stop,
   getStatus,
   isInstalled,

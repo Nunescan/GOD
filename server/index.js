@@ -11,10 +11,14 @@ const launcherRoutes = require('./routes/launcher');
 const authRoutes = require('./routes/auth');
 const settingsRoutes = require('./routes/settings');
 const cteRoutes = require('./routes/cte');
+const cabotagemRoutes = require('./routes/cabotagem');
+const activityLog = require('./services/activityLog');
+const schedule = require('./services/schedule');
+const cabotagemDaily = require('./services/cabotagemDaily');
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '4173', 10);
-const AUTO_REFRESH_MINUTES = parseInt(process.env.AUTO_REFRESH_MINUTES || '10', 10);
+const AUTO_REFRESH_MINUTES = schedule.getAutoRefreshMinutes();
 
 app.use(cors());
 app.use(express.json());
@@ -47,10 +51,17 @@ async function runAutomationAndRefresh(opts = {}) {
       await rebuildCache();
       pushLog('Concluido.');
     }
+    activityLog.add({
+      tipo: 'ravex',
+      titulo: result.ok ? 'Monitoramento do Ravex atualizado' : 'Falha ao atualizar o Ravex',
+      detalhe: result.ok ? 'Planilhas exportadas e processadas com sucesso.' : result.error,
+      ok: result.ok,
+    });
     return result;
   } catch (err) {
     pushLog(`Erro inesperado: ${err.message}`);
     automationState.lastResult = { ok: false, error: err.message };
+    activityLog.add({ tipo: 'ravex', titulo: 'Falha ao atualizar o Ravex', detalhe: err.message, ok: false });
     return automationState.lastResult;
   } finally {
     automationState.running = false;
@@ -148,6 +159,7 @@ app.post('/api/data/reprocess', async (req, res) => {
 app.use('/api/launcher', launcherRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/cte', cteRoutes);
+app.use('/api/cabotagem', cabotagemRoutes);
 
 // binda so em localhost: este servidor guarda dados internos da empresa e
 // nao deve ficar acessivel por outros dispositivos na mesma rede
@@ -159,5 +171,13 @@ app.listen(PORT, '127.0.0.1', () => {
       console.log(`[scheduler] Atualizando automaticamente a cada ${AUTO_REFRESH_MINUTES} min...`);
       runAutomationAndRefresh().catch((err) => console.error('[scheduler] erro:', err.message));
     }, AUTO_REFRESH_MINUTES * 60 * 1000);
+  }
+
+  // verificacao diaria de cabotagem: roda sozinha uma vez por dia, na
+  // primeira vez que o painel abre (nao depende de horario fixo)
+  const cabotagemConfig = cabotagemDaily.readConfig();
+  if (cabotagemConfig && cabotagemConfig.pasta && cabotagemConfig.speColumn && !cabotagemDaily.ranAlreadyToday()) {
+    console.log('[scheduler] Rodando verificacao diaria de cabotagem...');
+    cabotagemDaily.rodar().catch((err) => console.error('[scheduler] erro na verificacao diaria:', err.message));
   }
 });

@@ -15,9 +15,10 @@ GOD/
 ├── automation/          # Playwright: login + exportação da planilha do Ravex
 ├── server/
 │   ├── middleware/        # Autenticação (sessão/cookie do painel)
-│   ├── routes/             # Rotas HTTP (auth, settings, launcher, cte)
-│   ├── services/            # Regras de negócio (settings, excel, geocoding, rotas,
-│   │                          picker, veiculoParser, auxReportParser, cteRunner, cteDashboard)
+│   ├── routes/             # Rotas HTTP (auth, settings, launcher, cte, cabotagem)
+│   ├── services/            # Regras de negócio (settings, excel, geocoding, rotas, picker,
+│   │                          veiculoParser, auxReportParser, cteRunner, cteDashboard,
+│   │                          activityLog, speLookup, cabotagemDaily, schedule)
 │   └── index.js             # Ponto de entrada do servidor
 ├── public/               # Frontend (HTML/CSS/JS puro, sem build)
 │   ├── login.html           # Tela de senha (primeiro acesso cria a senha)
@@ -25,13 +26,16 @@ GOD/
 │   ├── dashboard.html         # Monitoramento (KPIs, tabela)
 │   ├── mapa.html               # Mapa em tempo real
 │   ├── cte.html                 # Painel do CT-e: dashboard, coleta, processar, relatório, log
-│   ├── settings.html             # Credenciais, senha do painel e atalhos
-│   └── data/br-states-topo.json   # Fronteiras dos estados (mapa) - dado estático
+│   ├── cabotagem.html            # Atividades, busca de SPE, verificação diária, e-mails
+│   ├── settings.html              # Credenciais, senha do painel e atalhos
+│   └── data/br-states-topo.json    # Fronteiras dos estados (mapa) - dado estático
 ├── config/
 │   ├── launcher.example.json  # Modelo de atalhos (vai pro git)
 │   ├── launcher.json           # Seus atalhos de verdade (não vai pro git)
 │   ├── columnMap.json           # Mapeamento manual de colunas (se você ajustou algum)
-│   └── secrets.json             # Credenciais do Ravex + hash da senha do painel (não vai pro git)
+│   ├── cabotagemConfig.json      # Config da verificação diária (não vai pro git)
+│   ├── schedule.json              # Horário de atualização automática (não vai pro git)
+│   └── secrets.json                # Credenciais do Ravex + hash da senha do painel (não vai pro git)
 ├── data/
 │   ├── downloads/         # Planilhas baixadas do Ravex (não vai pro git)
 │   └── cache/               # Dados já processados/geocodificados (não vai pro git)
@@ -93,6 +97,9 @@ estiver ligado.
   precisa digitar o caminho na mão).
 - **CT-e**: dashboard nativo + coleta/processamento/relatório do CZAR direto no
   painel, com log ao vivo. Veja a seção própria abaixo.
+- **Cabotagem**: histórico de tudo que o painel já fez, configuração do horário de
+  atualização, busca de SPE por planilha, verificação diária automática e busca de
+  e-mails. Veja a seção própria abaixo.
 
 Pra sair (ex: antes de sair da mesa), clique no ⏻ no canto superior direito.
 
@@ -182,6 +189,38 @@ Bugs corrigidos ao organizar isso:
 > instalado nesta máquina**. Instruções aparecem no final do `instalar-cte.bat`.
 > A página de Configuração do CZAR (modelo de template pra OCR) ainda não foi portada
 > pro painel nesta rodada.
+
+## Cabotagem
+
+Aba nova, com 4 sub-abas:
+
+- **Atividades**: histórico de tudo que o painel já fez (atualizações do Ravex,
+  comandos do CT-e, verificações de cabotagem - com data/hora e se deu certo ou não),
+  salvo em `data/cache/activity-log.json` (sobrevive a reinícios do servidor). Também
+  é onde fica o campo pra configurar de quantos em quantos minutos o Ravex atualiza
+  sozinho (`config/schedule.json` - vale a partir da próxima vez que o painel abrir).
+- **Buscar SPEs**: escolha qualquer planilha (ex: a programação de cabotagem que você
+  recebe por e-mail), aponte com um clique qual coluna tem a SPE (e, se quiser, uma
+  coluna de data pra filtrar), e o painel cruza cada SPE com os dados mais recentes do
+  Ravex - mostra se está alocada, status, origem/destino, cavalo/carreta etc. Dá pra
+  exportar o resultado numa planilha nova.
+- **Verificação diária**: configura uma vez (pasta do Outlook + filtro de assunto
+  opcional + qual coluna é a SPE/qual é a data) e, a partir daí, toda vez que o painel
+  abrir, ele confere sozinho se já rodou hoje - se não, busca o e-mail mais recente
+  dessa pasta com uma planilha em anexo, filtra pela data de hoje, cruza as SPEs com o
+  Ravex (mesma lógica da busca acima) e deixa uma planilha pronta em
+  `data/downloads/cabotagem-resultado_<data>.xlsx`, pra você conferir e enviar por
+  e-mail. Também dá pra clicar em "Rodar agora" a qualquer momento.
+- **E-mails**: busca e-mails numa pasta do Outlook por palavra-chave (assunto ou
+  corpo) - por exemplo "programação, cabotagem" - e lista assunto/remetente/data/se
+  tem anexo.
+
+> Isso usa a mesma automação local do Outlook que a Coleta do CT-e já usava
+> (`cte-czar/cli.py`, comandos `buscar-anexo` e `buscar-emails`) - ou seja, é o
+> **Outlook instalado no Windows**, não o Outlook Web. Uma integração com o Outlook
+> Web/Microsoft Graph exigiria cadastrar um aplicativo no Azure AD da empresa e pedir
+> permissão de acesso ao e-mail - bem mais complexo, e provavelmente precisaria da
+> aprovação do TI. Se um dia isso for necessário, dá pra revisitar.
 
 ## Se as colunas da planilha tiverem nomes diferentes
 

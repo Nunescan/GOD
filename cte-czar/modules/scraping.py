@@ -58,3 +58,33 @@ def escanear_pastas_outlook():
     if scanner.conectar_outlook():
         return scanner.escanear_pastas()
     return []
+
+
+def encontrar_pasta(nome_pasta, scanner, pasta_raiz=None):
+    """Acha uma pasta do Outlook pelo nome (busca recursiva). Compartilhada
+    entre o download de anexos e a busca de e-mails, pra nao duplicar essa
+    logica em dois lugares."""
+    if scanner.namespace is None:
+        return None
+
+    if pasta_raiz is None:
+        pasta_raiz = scanner.namespace.Folders
+
+    try:
+        for i in range(1, pasta_raiz.Count + 1):
+            try:
+                pasta = pasta_raiz.Item(i)
+
+                if pasta.Name.strip().lower() == nome_pasta.strip().lower():
+                    return pasta
+
+                if pasta.Folders.Count > 0:
+                    resultado = encontrar_pasta(nome_pasta, scanner, pasta.Folders)
+                    if resultado:
+                        return resultado
+            except Exception:
+                continue
+    except Exception as e:
+        print(f"❌ Erro na busca de pasta: {e}")
+
+    return None

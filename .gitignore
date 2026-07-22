@@ -5,9 +5,11 @@ node_modules/
 .env
 config/secrets.json
 
-# Atalhos pessoais (caminhos locais do seu PC) - fica so na sua maquina.
+# Atalhos e configuracoes pessoais (caminhos locais do seu PC) - fica so na sua maquina.
 # config/launcher.example.json (o template) continua versionado.
 config/launcher.json
+config/cabotagemConfig.json
+config/schedule.json
 
 # Dados baixados da planilha (tem informacao interna da empresa)
 data/downloads/*
@@ -26,6 +28,10 @@ cte-czar/**/*.pkl
 cte-czar/regiao_do_numero.png
 # vinculos.json guarda caminhos de pasta locais por armador - fica so na sua maquina
 cte-czar/config/vinculos.json
+
+# Planilhas de dados reais que voce coloca direto na pasta do projeto -
+# nunca vao pro Git (dados internos/financeiros da empresa)
+PLANILHAS BASE/
 
 # Logs
 *.log

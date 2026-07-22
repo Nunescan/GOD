@@ -155,6 +155,152 @@ def cmd_pastas_outlook(args):
     return 0
 
 
+def cmd_buscar_anexo(args):
+    """Acha o e-mail mais recente de uma pasta (com filtro opcional de
+    assunto) que tenha uma planilha em anexo, e salva esse anexo num caminho
+    escolhido. Usado pela verificação diária de cabotagem."""
+    from modules.scraping import OutlookScanner, encontrar_pasta
+
+    print("Conectando ao Outlook...")
+    scanner = OutlookScanner()
+    if not scanner.conectar_outlook():
+        print("ERRO: não foi possível conectar ao Outlook. Verifique se ele está instalado e aberto.")
+        return 1
+
+    pasta = encontrar_pasta(args.pasta, scanner)
+    if not pasta:
+        print(f"Pasta não encontrada: {args.pasta}")
+        return 1
+
+    itens = pasta.Items
+    try:
+        itens.Sort("[ReceivedTime]", True)
+    except Exception as e:
+        print(f"Aviso: não foi possível ordenar por data: {e}")
+
+    total = itens.Count
+    print(f"{total} item(ns) na pasta '{args.pasta}'")
+
+    palavra = (args.assunto or "").strip().lower()
+    encontrado = None
+    for i in range(1, total + 1):
+        try:
+            item = itens.Item(i)
+            if not (hasattr(item, 'Class') and item.Class == 43):
+                continue
+            if palavra and palavra not in str(item.Subject or "").lower():
+                continue
+            if not (hasattr(item, 'Attachments') and item.Attachments.Count > 0):
+                continue
+
+            for j in range(1, item.Attachments.Count + 1):
+                anexo = item.Attachments.Item(j)
+                nome = anexo.FileName
+                if Path(nome).suffix.lower() in ('.xlsx', '.xls'):
+                    encontrado = (item, anexo, nome)
+                    break
+
+            if encontrado:
+                break
+        except Exception:
+            continue
+
+    if not encontrado:
+        filtro = f" (assunto contendo \"{args.assunto}\")" if args.assunto else ""
+        print(f"Nenhum e-mail com planilha em anexo encontrado{filtro}.")
+        return 1
+
+    item, anexo, nome_original = encontrado
+    destino = Path(args.destino)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    anexo.SaveAsFile(str(destino))
+
+    assunto = str(item.Subject or "")
+    recebido = ""
+    try:
+        recebido = item.ReceivedTime.strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        pass
+
+    print(f"Anexo salvo: {destino}")
+    _print_result({
+        "tipo": "buscarAnexo",
+        "assunto": assunto,
+        "recebidoEm": recebido,
+        "arquivoOriginal": nome_original,
+        "destino": str(destino),
+    })
+    return 0
+
+
+def cmd_buscar_emails(args):
+    """Busca e-mails numa pasta cujo assunto/corpo contenha alguma das
+    palavras-chave (separadas por virgula), devolvendo assunto/remetente/data."""
+    from modules.scraping import OutlookScanner, encontrar_pasta
+
+    print("Conectando ao Outlook...")
+    scanner = OutlookScanner()
+    if not scanner.conectar_outlook():
+        print("ERRO: não foi possível conectar ao Outlook. Verifique se ele está instalado e aberto.")
+        return 1
+
+    pasta = encontrar_pasta(args.pasta, scanner)
+    if not pasta:
+        print(f"Pasta não encontrada: {args.pasta}")
+        return 1
+
+    itens = pasta.Items
+    try:
+        itens.Sort("[ReceivedTime]", True)
+    except Exception as e:
+        print(f"Aviso: não foi possível ordenar por data: {e}")
+
+    total = itens.Count
+    print(f"{total} item(ns) na pasta '{args.pasta}'")
+
+    palavras = [p.strip().lower() for p in (args.palavras or "").split(",") if p.strip()]
+    limite = args.limite or 50
+
+    resultados = []
+    for i in range(1, total + 1):
+        if len(resultados) >= limite:
+            break
+        try:
+            item = itens.Item(i)
+            if not (hasattr(item, 'Class') and item.Class == 43):
+                continue
+
+            assunto = str(item.Subject or "")
+            corpo = ""
+            try:
+                corpo = str(item.Body or "")
+            except Exception:
+                pass
+
+            texto = f"{assunto} {corpo}".lower()
+            if palavras and not any(p in texto for p in palavras):
+                continue
+
+            recebido = ""
+            try:
+                recebido = item.ReceivedTime.strftime("%Y-%m-%d %H:%M")
+            except Exception:
+                pass
+
+            resultados.append({
+                "assunto": assunto,
+                "remetente": str(getattr(item, 'SenderName', '') or ''),
+                "recebidoEm": recebido,
+                "temAnexo": bool(hasattr(item, 'Attachments') and item.Attachments.Count > 0),
+            })
+        except Exception:
+            continue
+
+    print(f"{len(resultados)} e-mail(s) encontrado(s)")
+    _print_result({"tipo": "buscarEmails", "emails": resultados})
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description="CLI do CZAR (CT-e)")
     sub = parser.add_subparsers(dest="comando", required=True)
@@ -176,6 +322,18 @@ def main():
 
     p_pastas = sub.add_parser("pastas-outlook", help="Lista as pastas do Outlook disponíveis")
     p_pastas.set_defaults(func=cmd_pastas_outlook)
+
+    p_anexo = sub.add_parser("buscar-anexo", help="Salva o anexo de planilha do e-mail mais recente de uma pasta")
+    p_anexo.add_argument("--pasta", required=True)
+    p_anexo.add_argument("--assunto", help="Filtro opcional: só considera e-mails com essa palavra no assunto")
+    p_anexo.add_argument("--destino", required=True)
+    p_anexo.set_defaults(func=cmd_buscar_anexo)
+
+    p_emails = sub.add_parser("buscar-emails", help="Busca e-mails numa pasta por palavra-chave")
+    p_emails.add_argument("--pasta", required=True)
+    p_emails.add_argument("--palavras", help="Palavras-chave separadas por vírgula (assunto ou corpo)")
+    p_emails.add_argument("--limite", type=int, default=50)
+    p_emails.set_defaults(func=cmd_buscar_emails)
 
     args = parser.parse_args()
     sys.exit(args.func(args))

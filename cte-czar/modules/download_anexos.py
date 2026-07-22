@@ -13,6 +13,8 @@ from email.parser import BytesParser
 import hashlib
 import json
 
+from modules.scraping import encontrar_pasta
+
 class DownloadAnexos:
     def __init__(self, pasta_base=None):
         if pasta_base is None:
@@ -355,29 +357,11 @@ class DownloadAnexos:
         return anexos_encontrados
     
     def _encontrar_pasta_outlook(self, nome_pasta, scanner, pasta_raiz=None):
-        if scanner.namespace is None:
-            return None
-        
-        if pasta_raiz is None:
-            pasta_raiz = scanner.namespace.Folders
-        
-        try:
-            for i in range(1, pasta_raiz.Count + 1):
-                try:
-                    pasta = pasta_raiz.Item(i)
-                    
-                    if pasta.Name.strip().lower() == nome_pasta.strip().lower():
-                        print(f"✅ Pasta encontrada: {pasta.Name}")
-                        return pasta
-                    
-                    if pasta.Folders.Count > 0:
-                        resultado = self._encontrar_pasta_outlook(nome_pasta, scanner, pasta.Folders)
-                        if resultado:
-                            return resultado
-                except:
-                    continue
-        except Exception as e:
-            print(f"❌ Erro na busca: {e}")
-        
-        print(f"❌ Pasta não encontrada: {nome_pasta}")
-        return None
+        # delega pra funcao compartilhada em modules/scraping.py (tambem usada
+        # na busca de e-mails do CLI), pra nao ter a mesma logica em dois lugares
+        pasta = encontrar_pasta(nome_pasta, scanner, pasta_raiz)
+        if pasta:
+            print(f"✅ Pasta encontrada: {pasta.Name}")
+        else:
+            print(f"❌ Pasta não encontrada: {nome_pasta}")
+        return pasta
