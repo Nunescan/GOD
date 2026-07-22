@@ -128,6 +128,10 @@ module.exports = {
     ['buscar-emails', '--pasta', pasta, ...(palavras ? ['--palavras', palavras] : []), '--limite', String(limite || 50)],
     `Buscar e-mails - ${pasta}`
   ),
+  enviarEmail: (para, assunto, corpo, anexo) => run(
+    ['enviar-email', ...(para ? ['--para', para] : []), ...(assunto ? ['--assunto', assunto] : []), ...(corpo ? ['--corpo', corpo] : []), ...(anexo ? ['--anexo', anexo] : [])],
+    'Abrir rascunho de e-mail'
+  ),
   stop,
   getStatus,
   isInstalled,

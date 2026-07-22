@@ -301,6 +301,39 @@ def cmd_buscar_emails(args):
     return 0
 
 
+def cmd_enviar_email(args):
+    """Abre um rascunho de e-mail no Outlook, com o anexo ja anexado, pronto
+    pra voce revisar e clicar em Enviar. Nao envia sozinho de proposito -
+    enviar e-mail e uma acao que so voce deve confirmar."""
+    import pythoncom
+    import win32com.client
+
+    pythoncom.CoInitialize()
+    try:
+        outlook = win32com.client.Dispatch("Outlook.Application")
+    except Exception as e:
+        print(f"ERRO: não foi possível abrir o Outlook: {e}")
+        return 1
+
+    mail = outlook.CreateItem(0)  # 0 = olMailItem
+    if args.para:
+        mail.To = args.para
+    mail.Subject = args.assunto or "Planilha de Pagamentos CT-e"
+    mail.Body = args.corpo or ""
+
+    if args.anexo:
+        caminho_anexo = Path(args.anexo)
+        if not caminho_anexo.exists():
+            print(f"Aviso: anexo não encontrado ({caminho_anexo}), abrindo sem anexo.")
+        else:
+            mail.Attachments.Add(str(caminho_anexo))
+
+    mail.Display()  # so ABRE a janela - quem envia e voce
+    print("Rascunho aberto no Outlook. Revise e clique em Enviar por lá.")
+    _print_result({"tipo": "enviarEmail", "assunto": mail.Subject})
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description="CLI do CZAR (CT-e)")
     sub = parser.add_subparsers(dest="comando", required=True)
@@ -334,6 +367,13 @@ def main():
     p_emails.add_argument("--palavras", help="Palavras-chave separadas por vírgula (assunto ou corpo)")
     p_emails.add_argument("--limite", type=int, default=50)
     p_emails.set_defaults(func=cmd_buscar_emails)
+
+    p_envio = sub.add_parser("enviar-email", help="Abre um rascunho no Outlook com anexo, pronto pra revisar e enviar")
+    p_envio.add_argument("--para", help="Destinatário (opcional, pode preencher na hora)")
+    p_envio.add_argument("--assunto")
+    p_envio.add_argument("--corpo")
+    p_envio.add_argument("--anexo", help="Caminho do arquivo a anexar")
+    p_envio.set_defaults(func=cmd_enviar_email)
 
     args = parser.parse_args()
     sys.exit(args.func(args))

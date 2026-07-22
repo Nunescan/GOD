@@ -152,7 +152,7 @@ tela no momento da falha fica salvo em `data/downloads/debug/`.
 aba/porta própria**. A essência de cada página virou um único CLI Python
 (`cte-czar/cli.py`, comandos `processar` / `relatorio` / `coletar` / `pastas-outlook`),
 chamado pelo painel sob demanda. Tudo aparece dentro da aba **CT-e** do painel, em
-5 sub-abas:
+6 sub-abas:
 
 - **Dashboard**: escolha um relatório Excel já gerado (botão "Procurar arquivo", sem
   precisar arrastar nada) e veja os KPIs e gráficos (total de CTEs, valor de
@@ -165,6 +165,7 @@ chamado pelo painel sob demanda. Tudo aparece dentro da aba **CT-e** do painel, 
 - **Processar**: escolhe a pasta com os PDFs/XMLs baixados (seletor nativo do
   Windows) e organiza/renomeia tudo por CTE/container.
 - **Relatório**: gera o Excel consolidado a partir de uma pasta já processada.
+- **Pagamentos**: veja a seção própria abaixo.
 - **Log**: mostra ao vivo tudo que o comando em execução está fazendo (e o resultado,
   quando termina) - sem precisar abrir terminal nenhum.
 
@@ -189,6 +190,32 @@ Bugs corrigidos ao organizar isso:
 > instalado nesta máquina**. Instruções aparecem no final do `instalar-cte.bat`.
 > A página de Configuração do CZAR (modelo de template pra OCR) ainda não foi portada
 > pro painel nesta rodada.
+
+### Pagamentos
+
+Você tinha 4 planilhas separadas de "Controle de Pagamento" (uma por armador -
+Aliança, Login, Mercosul, Norcoast), cada uma com ~30 colunas parecidas mas não
+idênticas. A sub-aba **Pagamentos** sintetiza isso numa **planilha-modelo única**
+(`server/services/pagamentos.js`, 28 colunas: CTE, NF, Tomador, Origem/Destino,
+Filial, Valor Frete, Valor Mercadoria, Ad-Valorem, ICMS, BAF, Taxa Seca, Diferença de
+validação, etc, com cabeçalho estilizado e filtro automático):
+
+1. **Baixar modelo** - baixa a planilha vazia, pronta pra preencher com os CT-e do
+   período (um campo "Armador" identifica de qual armador é cada linha).
+2. Preenche com os dados (pode juntar os 4 armadores na mesma planilha).
+3. **Carregar planilha preenchida** - escolhe o arquivo (seletor nativo) e o painel
+   monta um dashboard: total de CT-e, valor de frete/mercadoria/ad-valorem/BAF,
+   quebra por armador e por filial, e uma lista de **CT-e com diferença de validação**
+   (pra conferir antes de pagar).
+4. **Enviar por e-mail** - abre um rascunho no Outlook com a planilha já anexada,
+   assunto preenchido, pronto pra você revisar o destinatário/texto e clicar em
+   Enviar. **De propósito, não envia sozinho** - enviar e-mail é uma ação que só você
+   deve confirmar.
+
+> Como o modelo é escrito por nós, a leitura casa por nome exato de coluna (sem
+> precisar adivinhar por palavra-chave, diferente do Monitoramento do Ravex). Se
+> precisar de mais colunas, é só editar `TEMPLATE_HEADERS` em
+> `server/services/pagamentos.js`.
 
 ## Cabotagem
 

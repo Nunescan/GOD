@@ -44,6 +44,7 @@
     <button class="nav-link tab-btn" data-tab="tab-coleta">📧 Coleta</button>
     <button class="nav-link tab-btn" data-tab="tab-processar">📁 Processar</button>
     <button class="nav-link tab-btn" data-tab="tab-relatorio">📑 Relatório</button>
+    <button class="nav-link tab-btn" data-tab="tab-pagamentos">💰 Pagamentos</button>
     <button class="nav-link tab-btn" data-tab="tab-log">🖥️ Log</button>
   </div>
 
@@ -174,6 +175,79 @@
         <button type="button" class="btn" id="relatorioBtn">📑 Gerar relatório</button>
       </div>
       <div class="hint" id="relResultMsg" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- PAGAMENTOS -->
+  <div class="tab-panel" id="tab-pagamentos" style="display:none;">
+    <div class="card">
+      <div class="section-title">Planilha de pagamentos CT-e</div>
+      <p class="hint">
+        Modelo único, sintetizado a partir das planilhas de controle de pagamento
+        de cada armador. Baixe, preencha com os CT-e do período, e suba de volta
+        aqui pra ver o dashboard e mandar por e-mail.
+      </p>
+      <div class="form-actions">
+        <a class="btn secondary" href="/api/cte/pagamentos/modelo" download>📥 Baixar modelo</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Carregar planilha preenchida</div>
+      <div class="input-with-btn">
+        <input type="text" id="pagFilePath" readonly placeholder="Escolha a planilha preenchida...">
+        <button type="button" class="btn secondary" id="pagPickBtn">📄 Procurar arquivo</button>
+        <button type="button" class="btn" id="pagLoadBtn">Carregar</button>
+      </div>
+      <div class="hint" id="pagMsg" style="margin-top:8px;"></div>
+    </div>
+
+    <div id="pagContent" style="display:none;">
+      <div class="kpi-grid" id="pagKpis"></div>
+
+      <div class="hero-grid" style="margin-top:20px;">
+        <div class="card">
+          <div class="section-title">Por armador</div>
+          <div id="pagPorArmador"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Por filial</div>
+          <div id="pagPorFilial"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="section-title">CT-e com diferença de validação (atenção antes de pagar)</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>CTE</th><th>Armador</th><th>Tomador</th><th>Diferença</th></tr>
+            </thead>
+            <tbody id="pagDiferencaBody"></tbody>
+          </table>
+          <div class="empty-state" id="pagDiferencaVazio" style="display:none;">Nenhuma diferença encontrada 🎉</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="section-title">Enviar por e-mail</div>
+        <p class="hint">Abre um rascunho no Outlook com a planilha em anexo, pra você revisar
+          o destinatário e o texto antes de clicar em Enviar.</p>
+        <div class="field-row">
+          <div class="field">
+            <label for="pagEmailPara">Para (opcional)</label>
+            <input type="text" id="pagEmailPara" placeholder="nome@empresa.com.br">
+          </div>
+          <div class="field">
+            <label for="pagEmailAssunto">Assunto</label>
+            <input type="text" id="pagEmailAssunto" value="Planilha de Pagamentos CT-e">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn" id="pagEmailBtn">✉️ Abrir rascunho no Outlook</button>
+          <span class="hint" id="pagEmailMsg"></span>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -271,3 +271,84 @@ document.getElementById('relatorioBtn').addEventListener('click', async () => {
 });
 
 loadVinculos();
+
+// ---------- pagamentos ----------
+const pagFilePath = document.getElementById('pagFilePath');
+const pagMsg = document.getElementById('pagMsg');
+const pagContent = document.getElementById('pagContent');
+let ultimoAnexoPagamentos = '';
+
+document.getElementById('pagPickBtn').addEventListener('click', async () => {
+  const result = await fetchJSON('/api/cte/pagamentos/pick-file', { method: 'POST' }).catch((err) => {
+    alert(`Erro: ${err.message}`);
+    return null;
+  });
+  if (result && result.path) pagFilePath.value = result.path;
+});
+
+document.getElementById('pagLoadBtn').addEventListener('click', async () => {
+  if (!pagFilePath.value) {
+    pagMsg.textContent = 'Escolha a planilha primeiro.';
+    return;
+  }
+  pagMsg.textContent = 'Carregando...';
+  try {
+    const data = await fetchJSON('/api/cte/pagamentos/carregar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: pagFilePath.value }),
+    });
+    pagMsg.textContent = '';
+    pagContent.style.display = 'block';
+    ultimoAnexoPagamentos = pagFilePath.value;
+
+    const moeda = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('pagKpis').innerHTML = `
+      <div class="kpi-tile"><div class="value">${data.totalCtes}</div><div class="label">📦 Total de CT-e</div></div>
+      <div class="kpi-tile"><div class="value">${moeda(data.valorFreteTotal)}</div><div class="label">🚚 Valor Frete</div></div>
+      <div class="kpi-tile"><div class="value">${moeda(data.valorMercadoriaTotal)}</div><div class="label">💰 Valor Mercadoria</div></div>
+      <div class="kpi-tile"><div class="value">${moeda(data.adValoremTotal)}</div><div class="label">🛡️ Ad-Valorem</div></div>
+      <div class="kpi-tile"><div class="value">${moeda(data.bafTotal)}</div><div class="label">⛽ BAF</div></div>
+      <div class="kpi-tile ${data.totalComDiferenca > 0 ? 'critical' : 'good'}"><div class="value">${data.totalComDiferenca}</div><div class="label">⚠️ Com diferença</div></div>
+    `;
+
+    renderBarList(document.getElementById('pagPorArmador'), data.porArmador);
+    renderBarList(document.getElementById('pagPorFilial'), data.porFilial);
+
+    const diferencaBody = document.getElementById('pagDiferencaBody');
+    const diferencaVazio = document.getElementById('pagDiferencaVazio');
+    diferencaVazio.style.display = data.comDiferenca.length === 0 ? 'block' : 'none';
+    diferencaBody.innerHTML = data.comDiferenca.map((r) => `
+      <tr>
+        <td>${r.cte || '-'}</td>
+        <td>${r.armador || '-'}</td>
+        <td>${r.tomador || '-'}</td>
+        <td>${moeda(r.diferenca)}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    pagMsg.textContent = `Erro: ${err.message}`;
+    pagContent.style.display = 'none';
+  }
+});
+
+document.getElementById('pagEmailBtn').addEventListener('click', async () => {
+  const pagEmailMsg = document.getElementById('pagEmailMsg');
+  if (!ultimoAnexoPagamentos) {
+    pagEmailMsg.textContent = 'Carregue uma planilha primeiro.';
+    return;
+  }
+  const para = document.getElementById('pagEmailPara').value;
+  const assunto = document.getElementById('pagEmailAssunto').value;
+  pagEmailMsg.textContent = 'Abrindo o Outlook...';
+  try {
+    await fetchJSON('/api/cte/pagamentos/enviar-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ para, assunto, corpo: 'Segue em anexo a planilha de pagamentos de CT-e.', anexo: ultimoAnexoPagamentos }),
+    });
+    pagEmailMsg.textContent = 'Rascunho aberto no Outlook - revise e envie por lá.';
+  } catch (err) {
+    pagEmailMsg.textContent = `Erro: ${err.message}`;
+  }
+});
