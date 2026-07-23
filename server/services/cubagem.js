@@ -26,19 +26,33 @@ function sobrepoe(a, b) {
     && a.z < b.z + b.altura && a.z + a.altura > b.z;
 }
 
-function cabeNoVeiculo(pos, dim, veiculo) {
+function cabeNoVeiculo(pos, dim, alturaUtil, veiculo) {
   return pos.x + dim[0] <= veiculo.comprimento + 1e-9
     && pos.y + dim[1] <= veiculo.largura + 1e-9
-    && pos.z + dim[2] <= veiculo.altura + 1e-9;
+    && pos.z + dim[2] <= alturaUtil + 1e-9;
 }
 
+// altura acima da qual uma pilha de carga (paletizada ou nao) comeca a
+// precisar de reforco (filme stretch, cantoneira) pra nao tombar em curva -
+// nao bloqueia nada, so vira um aviso informativo no resultado
+const ALTURA_AVISO_ESTABILIDADE = 1.8;
+
 /**
- * Recebe o veiculo ({comprimento, largura, altura, capacidadeKg} em metros/kg)
- * e a lista de cargas ({nome, comprimento, largura, altura, peso, quantidade, cor}),
- * devolve as caixas colocadas com posicao (x,y,z) + dimensoes finais (depois
- * da rotacao escolhida), as que nao couberam, e os totais de ocupacao.
+ * Recebe o veiculo ({comprimento, largura, altura, capacidadeKg, margemTopo}
+ * em metros/kg) e a lista de cargas ({nome, comprimento, largura, altura,
+ * peso, quantidade, cor}), devolve as caixas colocadas com posicao (x,y,z) +
+ * dimensoes finais (depois da rotacao escolhida), as que nao couberam, e os
+ * totais de ocupacao.
+ *
+ * margemTopo e o espaco que tem que sobrar livre entre o topo da carga e o
+ * teto do veiculo - obrigatorio em conteiner reefer (a "linha vermelha":
+ * o ar frio circula por cima da carga e volta pelo piso canaletado; se a
+ * carga encostar no teto, bloqueia a circulacao e a carga estraga).
  */
 function calcularCubagem(veiculo, cargas) {
+  const margemTopo = Math.max(0, veiculo.margemTopo || 0);
+  const alturaUtil = Math.max(0, veiculo.altura - margemTopo);
+
   // expande "quantidade" em itens individuais e ordena do maior volume pro
   // menor - colocar os grandes primeiro deixa mais espaco livre pros pequenos
   // encaixarem depois (heuristica classica de bin packing: "first fit decreasing")
@@ -63,7 +77,7 @@ function calcularCubagem(veiculo, cargas) {
     for (let p = 0; p < pontosLivres.length; p += 1) {
       const pos = pontosLivres[p];
       for (const dim of rotacoes(item)) {
-        if (!cabeNoVeiculo(pos, dim, veiculo)) continue;
+        if (!cabeNoVeiculo(pos, dim, alturaUtil, veiculo)) continue;
         const caixaTeste = { x: pos.x, y: pos.y, z: pos.z, comprimento: dim[0], largura: dim[1], altura: dim[2] };
         const bate = colocadas.some((outra) => sobrepoe(caixaTeste, outra));
         if (bate) continue;
@@ -111,8 +125,11 @@ function calcularCubagem(veiculo, cargas) {
     );
   });
 
-  const volumeVeiculo = veiculo.comprimento * veiculo.largura * veiculo.altura;
+  // volume "util" (o que realmente da pra ocupar, ja descontando a margem
+  // do topo) - e a base mais honesta pra calcular % de ocupacao
+  const volumeVeiculo = veiculo.comprimento * veiculo.largura * alturaUtil;
   const capacidadeKg = veiculo.capacidadeKg || 0;
+  const alturaMaxUsada = colocadas.reduce((max, c) => Math.max(max, c.z + c.altura), 0);
 
   return {
     caixasColocadas: colocadas,
@@ -123,8 +140,12 @@ function calcularCubagem(veiculo, cargas) {
     volumeVeiculo: Math.round(volumeVeiculo * 100) / 100,
     pesoUsado: Math.round(pesoUsado * 100) / 100,
     capacidadeKg,
+    margemTopo,
+    alturaUtil: Math.round(alturaUtil * 1000) / 1000,
     excedeuPeso: capacidadeKg > 0 && pesoUsado > capacidadeKg,
     excedeuItens: naoCoube.length > 0,
+    avisoEstabilidade: alturaMaxUsada > ALTURA_AVISO_ESTABILIDADE,
+    alturaMaxUsada: Math.round(alturaMaxUsada * 100) / 100,
   };
 }
 

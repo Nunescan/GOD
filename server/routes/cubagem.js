@@ -23,6 +23,7 @@ router.post('/calcular', (req, res) => {
     largura: numero(veiculo.largura),
     altura: numero(veiculo.altura),
     capacidadeKg: numero(veiculo.capacidadeKg),
+    margemTopo: numero(veiculo.margemTopo),
   };
 
   const cargasNormalizadas = cargas

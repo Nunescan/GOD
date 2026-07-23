@@ -3,19 +3,35 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 startClock(document.getElementById('clock'), document.getElementById('dateLabel'));
 
-// medidas internas usuais (metros) e capacidade util aproximada (kg) - ajustaveis na tela.
-// Os paletes usam a mesma logica dos veiculos (sao so um "recipiente" menor) -
-// a altura e a altura MAXIMA UTIL de empilhamento (nao a altura do palete vazio,
-// que e uns 14-15cm), e o peso e a capacidade de carga que ele aguenta.
+// Medidas internas (metros) e capacidade util aproximada (kg). Fontes:
+// - Hapag-Lloyd: ficha tecnica oficial (Container Specification PDF)
+// - Mercosul Line: pagina oficial de conteineres (mercosul-line.com.br)
+// - genericos/Reefer: referencia agregada (despex.com.br) + ISO 668
+// - Alianca: nao consegui abrir a pagina oficial deles (timeout) - valor
+//   aproximado de busca, confira antes de usar pra algo critico
+// Os paletes e reefer usam a mesma logica dos veiculos (sao so um
+// "recipiente" menor) - a altura e a altura interna, e a margemTopo (quando
+// tem) e descontada dela pelo backend antes de calcular o quanto cabe.
 const PRESETS = {
-  conteiner20: { comprimento: 5.90, largura: 2.35, altura: 2.39, capacidadeKg: 28000 },
-  conteiner40: { comprimento: 12.03, largura: 2.35, altura: 2.39, capacidadeKg: 26500 },
-  carreta: { comprimento: 14.0, largura: 2.5, altura: 2.7, capacidadeKg: 27000 },
-  truck: { comprimento: 7.0, largura: 2.4, altura: 2.5, capacidadeKg: 14000 },
-  paletePbr: { comprimento: 1.20, largura: 1.00, altura: 1.80, capacidadeKg: 1500 },
-  paleteEuro: { comprimento: 1.20, largura: 0.80, altura: 1.80, capacidadeKg: 1000 },
-  paleteAmericano: { comprimento: 1.219, largura: 1.016, altura: 1.80, capacidadeKg: 1000 },
-  manual: { comprimento: 5.90, largura: 2.35, altura: 2.39, capacidadeKg: 28000 },
+  conteiner20: { comprimento: 5.898, largura: 2.352, altura: 2.394, capacidadeKg: 21630, margemTopo: 0 },
+  conteiner40: { comprimento: 12.031, largura: 2.352, altura: 2.394, capacidadeKg: 26480, margemTopo: 0 },
+  conteiner40hc: { comprimento: 12.031, largura: 2.352, altura: 2.698, capacidadeKg: 26500, margemTopo: 0 },
+  hapagLloyd40: { comprimento: 12.029, largura: 2.350, altura: 2.392, capacidadeKg: 26700, margemTopo: 0 },
+  maersk40: { comprimento: 12.032, largura: 2.350, altura: 2.393, capacidadeKg: 28800, margemTopo: 0 },
+  mercosul20: { comprimento: 5.900, largura: 2.352, altura: 2.393, capacidadeKg: 28250, margemTopo: 0 },
+  mercosul40: { comprimento: 12.034, largura: 2.352, altura: 2.395, capacidadeKg: 23040, margemTopo: 0 },
+  alianca40: { comprimento: 12.0, largura: 2.44, altura: 2.59, capacidadeKg: 26930, margemTopo: 0 },
+  carreta: { comprimento: 14.0, largura: 2.5, altura: 2.7, capacidadeKg: 27000, margemTopo: 0 },
+  truck: { comprimento: 7.0, largura: 2.4, altura: 2.5, capacidadeKg: 14000, margemTopo: 0 },
+  // reefer: altura ja e a altura interna bruta - a margemTopo de 0.12m
+  // representa a "linha vermelha" (10-12cm abaixo do teto) obrigatoria pra
+  // nao bloquear a circulacao de ar frio
+  reefer20: { comprimento: 5.449, largura: 2.290, altura: 2.244, capacidadeKg: 20950, margemTopo: 0.12 },
+  reefer40hc: { comprimento: 11.6, largura: 2.29, altura: 2.54, capacidadeKg: 27000, margemTopo: 0.12 },
+  paletePbr: { comprimento: 1.20, largura: 1.00, altura: 1.80, capacidadeKg: 1500, margemTopo: 0 },
+  paleteEuro: { comprimento: 1.20, largura: 0.80, altura: 1.80, capacidadeKg: 1000, margemTopo: 0 },
+  paleteAmericano: { comprimento: 1.219, largura: 1.016, altura: 1.80, capacidadeKg: 1000, margemTopo: 0 },
+  manual: { comprimento: 5.90, largura: 2.35, altura: 2.39, capacidadeKg: 28000, margemTopo: 0 },
 };
 
 const CORES = ['#3987e5', '#ec835a', '#0ca30c', '#fab219', '#d4af37', '#e66767', '#8a5fd6', '#3ecfc0'];
@@ -25,12 +41,14 @@ const vComprimento = document.getElementById('vComprimento');
 const vLargura = document.getElementById('vLargura');
 const vAltura = document.getElementById('vAltura');
 const vCapacidade = document.getElementById('vCapacidade');
+const vMargemTopo = document.getElementById('vMargemTopo');
 const cargasBody = document.getElementById('cargasBody');
 const addCargaBtn = document.getElementById('addCargaBtn');
 const calcularBtn = document.getElementById('calcularBtn');
 const calcularMsg = document.getElementById('calcularMsg');
 const resultCard = document.getElementById('resultCard');
 const alertaCard = document.getElementById('alertaCard');
+const avisoEstabilidade = document.getElementById('avisoEstabilidade');
 
 function aplicarPreset(nome) {
   const p = PRESETS[nome];
@@ -38,6 +56,7 @@ function aplicarPreset(nome) {
   vLargura.value = p.largura;
   vAltura.value = p.altura;
   vCapacidade.value = p.capacidadeKg;
+  vMargemTopo.value = p.margemTopo || 0;
 }
 
 veiculoPreset.addEventListener('change', () => aplicarPreset(veiculoPreset.value));
@@ -130,7 +149,7 @@ function limparCena() {
 
 // desenha o veiculo (wireframe transparente) e cada caixa colocada, todas
 // centralizadas na origem pra camera girar em torno do meio da carga
-function renderizarCena(veiculo, caixas) {
+function renderizarCena(veiculo, caixas, margemTopo) {
   limparCena();
 
   const cx = veiculo.comprimento / 2;
@@ -142,6 +161,24 @@ function renderizarCena(veiculo, caixas) {
   const veiculoWire = new THREE.LineSegments(veiculoEdges, new THREE.LineBasicMaterial({ color: 0x3987e5, opacity: 0.6, transparent: true }));
   veiculoWire.position.set(0, 0, 0);
   grupoCaixas.add(veiculoWire);
+
+  // "linha vermelha": plano semi-transparente marcando o limite util quando
+  // tem margem de seguranca no topo (reefer) - carga nao pode passar disso
+  if (margemTopo > 0) {
+    const alturaUtil = veiculo.altura - margemTopo;
+    const planoGeo = new THREE.PlaneGeometry(veiculo.comprimento, veiculo.largura);
+    const planoMat = new THREE.MeshBasicMaterial({ color: 0xe66767, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
+    const plano = new THREE.Mesh(planoGeo, planoMat);
+    plano.rotation.x = Math.PI / 2;
+    plano.position.set(0, alturaUtil - cy, 0);
+    grupoCaixas.add(plano);
+
+    const bordaGeo = new THREE.EdgesGeometry(planoGeo);
+    const borda = new THREE.LineSegments(bordaGeo, new THREE.LineBasicMaterial({ color: 0xe66767 }));
+    borda.rotation.x = Math.PI / 2;
+    borda.position.set(0, alturaUtil - cy, 0);
+    grupoCaixas.add(borda);
+  }
 
   caixas.forEach((c) => {
     const geo = new THREE.BoxGeometry(c.comprimento, c.altura, c.largura);
@@ -186,6 +223,7 @@ calcularBtn.addEventListener('click', async () => {
     largura: parseFloat(vLargura.value) || 0,
     altura: parseFloat(vAltura.value) || 0,
     capacidadeKg: parseFloat(vCapacidade.value) || 0,
+    margemTopo: parseFloat(vMargemTopo.value) || 0,
   };
   const cargas = lerCargas().filter((c) => c.comprimento > 0 && c.largura > 0 && c.altura > 0);
 
@@ -226,8 +264,15 @@ calcularBtn.addEventListener('click', async () => {
       alertaCard.style.display = 'none';
     }
 
+    if (data.avisoEstabilidade) {
+      avisoEstabilidade.textContent = `📐 Pilha chegando a ${data.alturaMaxUsada}m de altura - acima de 1,8m, considere filme stretch e cantoneiras de papelão pra carga não tombar em curva.`;
+      avisoEstabilidade.style.display = 'block';
+    } else {
+      avisoEstabilidade.style.display = 'none';
+    }
+
     if (!scene) initCena();
-    renderizarCena(veiculo, data.caixasColocadas);
+    renderizarCena(veiculo, data.caixasColocadas, data.margemTopo);
 
     calcularMsg.textContent = `${data.caixasColocadas.length} caixa(s) posicionada(s).`;
   } catch (err) {

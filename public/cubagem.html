@@ -46,10 +46,20 @@
         <label for="veiculoPreset">Tipo</label>
         <select id="veiculoPreset">
           <optgroup label="Veículos">
-            <option value="conteiner20">Contêiner 20ft</option>
-            <option value="conteiner40">Contêiner 40ft</option>
+            <option value="conteiner20">Contêiner 20ft (genérico)</option>
+            <option value="conteiner40">Contêiner 40ft Standard (genérico)</option>
+            <option value="conteiner40hc">Contêiner 40ft High Cube (genérico)</option>
+            <option value="hapagLloyd40">Contêiner 40ft Standard - Hapag-Lloyd</option>
+            <option value="maersk40">Contêiner 40ft Standard - Maersk</option>
+            <option value="mercosul20">Contêiner 20ft - Mercosul Line</option>
+            <option value="mercosul40">Contêiner 40ft - Mercosul Line</option>
+            <option value="alianca40">Contêiner 40ft - Aliança (aprox.)</option>
             <option value="carreta">Carreta Baú</option>
             <option value="truck">Truck / Toco</option>
+          </optgroup>
+          <optgroup label="Reefer (refrigerado - já com margem da linha vermelha)">
+            <option value="reefer20">Contêiner 20ft Reefer</option>
+            <option value="reefer40hc">Contêiner 40ft HC Reefer</option>
           </optgroup>
           <optgroup label="Paletes (pra ver quantas caixas cabem por palete)">
             <option value="paletePbr">Palete PBR (1,20 x 1,00m)</option>
@@ -63,13 +73,16 @@
     <div class="field-row">
       <div class="field"><label for="vComprimento">Comprimento (m)</label><input type="number" id="vComprimento" step="0.01" min="0"></div>
       <div class="field"><label for="vLargura">Largura (m)</label><input type="number" id="vLargura" step="0.01" min="0"></div>
-      <div class="field"><label for="vAltura">Altura útil de empilhamento (m)</label><input type="number" id="vAltura" step="0.01" min="0"></div>
+      <div class="field"><label for="vAltura">Altura interna (m)</label><input type="number" id="vAltura" step="0.01" min="0"></div>
       <div class="field"><label for="vCapacidade">Capacidade máxima (kg)</label><input type="number" id="vCapacidade" step="1" min="0"></div>
+      <div class="field"><label for="vMargemTopo">Margem de segurança no topo (m)</label><input type="number" id="vMargemTopo" step="0.01" min="0" value="0"></div>
     </div>
     <p class="hint">
       Valores dos presets são aproximados - ajuste se souber o exato do seu equipamento.
-      Nos paletes, "altura" é a altura útil de empilhamento (não a altura do palete vazio) e a
-      "cor" da caixa/carga é só visual, pra diferenciar tipos na cena 3D.
+      A <b>margem no topo</b> é espaço que fica vazio entre a carga e o teto por padrão (0m) - nos
+      presets <b>Reefer</b> já vem preenchida com a "linha vermelha" (o ar frio precisa circular
+      por cima da carga; encostando no teto, bloqueia a refrigeração e a carga estraga).
+      Nos paletes, "altura" já é a altura útil de empilhamento (não a altura do palete vazio).
     </p>
   </div>
 
@@ -114,6 +127,7 @@
       </div>
     </div>
     <div class="hint" id="alertaCard" style="display:none; color: var(--status-critical); font-weight:600; margin-bottom:12px;"></div>
+    <div class="hint" id="avisoEstabilidade" style="display:none; color: var(--status-warning); margin-bottom:12px;"></div>
 
     <div id="cena3d"></div>
     <p class="hint" style="margin-top:8px;">Arraste pra girar, role o mouse pra dar zoom.</p>
