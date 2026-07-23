@@ -3,12 +3,18 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 startClock(document.getElementById('clock'), document.getElementById('dateLabel'));
 
-// medidas internas usuais (metros) e capacidade util aproximada (kg) - ajustaveis na tela
+// medidas internas usuais (metros) e capacidade util aproximada (kg) - ajustaveis na tela.
+// Os paletes usam a mesma logica dos veiculos (sao so um "recipiente" menor) -
+// a altura e a altura MAXIMA UTIL de empilhamento (nao a altura do palete vazio,
+// que e uns 14-15cm), e o peso e a capacidade de carga que ele aguenta.
 const PRESETS = {
   conteiner20: { comprimento: 5.90, largura: 2.35, altura: 2.39, capacidadeKg: 28000 },
   conteiner40: { comprimento: 12.03, largura: 2.35, altura: 2.39, capacidadeKg: 26500 },
   carreta: { comprimento: 14.0, largura: 2.5, altura: 2.7, capacidadeKg: 27000 },
   truck: { comprimento: 7.0, largura: 2.4, altura: 2.5, capacidadeKg: 14000 },
+  paletePbr: { comprimento: 1.20, largura: 1.00, altura: 1.80, capacidadeKg: 1500 },
+  paleteEuro: { comprimento: 1.20, largura: 0.80, altura: 1.80, capacidadeKg: 1000 },
+  paleteAmericano: { comprimento: 1.219, largura: 1.016, altura: 1.80, capacidadeKg: 1000 },
   manual: { comprimento: 5.90, largura: 2.35, altura: 2.39, capacidadeKg: 28000 },
 };
 

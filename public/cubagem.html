@@ -45,10 +45,17 @@
       <div class="field">
         <label for="veiculoPreset">Tipo</label>
         <select id="veiculoPreset">
-          <option value="conteiner20">Contêiner 20ft</option>
-          <option value="conteiner40">Contêiner 40ft</option>
-          <option value="carreta">Carreta Baú</option>
-          <option value="truck">Truck / Toco</option>
+          <optgroup label="Veículos">
+            <option value="conteiner20">Contêiner 20ft</option>
+            <option value="conteiner40">Contêiner 40ft</option>
+            <option value="carreta">Carreta Baú</option>
+            <option value="truck">Truck / Toco</option>
+          </optgroup>
+          <optgroup label="Paletes (pra ver quantas caixas cabem por palete)">
+            <option value="paletePbr">Palete PBR (1,20 x 1,00m)</option>
+            <option value="paleteEuro">Palete Europeu (1,20 x 0,80m)</option>
+            <option value="paleteAmericano">Palete Americano (1,22 x 1,02m)</option>
+          </optgroup>
           <option value="manual">Personalizado (ajustar abaixo)</option>
         </select>
       </div>
@@ -56,10 +63,14 @@
     <div class="field-row">
       <div class="field"><label for="vComprimento">Comprimento (m)</label><input type="number" id="vComprimento" step="0.01" min="0"></div>
       <div class="field"><label for="vLargura">Largura (m)</label><input type="number" id="vLargura" step="0.01" min="0"></div>
-      <div class="field"><label for="vAltura">Altura (m)</label><input type="number" id="vAltura" step="0.01" min="0"></div>
+      <div class="field"><label for="vAltura">Altura útil de empilhamento (m)</label><input type="number" id="vAltura" step="0.01" min="0"></div>
       <div class="field"><label for="vCapacidade">Capacidade máxima (kg)</label><input type="number" id="vCapacidade" step="1" min="0"></div>
     </div>
-    <p class="hint">Valores dos presets são aproximados (medidas internas usuais) - ajuste se você souber o exato do seu equipamento.</p>
+    <p class="hint">
+      Valores dos presets são aproximados - ajuste se souber o exato do seu equipamento.
+      Nos paletes, "altura" é a altura útil de empilhamento (não a altura do palete vazio) e a
+      "cor" da caixa/carga é só visual, pra diferenciar tipos na cena 3D.
+    </p>
   </div>
 
   <div class="card">
