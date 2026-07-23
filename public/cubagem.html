@@ -62,6 +62,7 @@
             <option value="reefer40hc">Contêiner 40ft HC Reefer</option>
           </optgroup>
           <optgroup label="Paletes (pra ver quantas caixas cabem por palete)">
+            <option value="paleteSeara">Palete Seara (PBR, até 2,10m/1200kg)</option>
             <option value="paletePbr">Palete PBR (1,20 x 1,00m)</option>
             <option value="paleteEuro">Palete Europeu (1,20 x 0,80m)</option>
             <option value="paleteAmericano">Palete Americano (1,22 x 1,02m)</option>
@@ -129,8 +130,17 @@
     <div class="hint" id="alertaCard" style="display:none; color: var(--status-critical); font-weight:600; margin-bottom:12px;"></div>
     <div class="hint" id="avisoEstabilidade" style="display:none; color: var(--status-warning); margin-bottom:12px;"></div>
 
+    <div class="form-actions" style="margin-bottom:12px;">
+      <button type="button" class="btn secondary" id="usarComoCargaBtn">📦 Usar este palete carregado como carga (ver quantos cabem no contêiner)</button>
+      <span class="hint" id="usarComoCargaMsg"></span>
+    </div>
+
     <div id="cena3d"></div>
-    <p class="hint" style="margin-top:8px;">Arraste pra girar, role o mouse pra dar zoom.</p>
+    <p class="hint" style="margin-top:8px;">
+      Arraste no vazio pra girar a câmera, role o mouse pra dar zoom.
+      Clique e arraste uma caixa/palete pra reposicionar manualmente (fica vermelho se
+      colidir com outra ou sair do veículo).
+    </p>
   </div>
 
 </div>

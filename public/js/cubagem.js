@@ -28,6 +28,11 @@ const PRESETS = {
   // nao bloquear a circulacao de ar frio
   reefer20: { comprimento: 5.449, largura: 2.290, altura: 2.244, capacidadeKg: 20950, margemTopo: 0.12 },
   reefer40hc: { comprimento: 11.6, largura: 2.29, altura: 2.54, capacidadeKg: 27000, margemTopo: 0.12 },
+  // altura 2.10m e peso 1200kg sao os limites que a propria Seara usa no
+  // projeto de reengenharia de caixas pra otimizar o caminhao (fonte:
+  // projetodraft.com/seara-reengenharia-de-caixas) - as dimensoes exatas
+  // das caixas nao sao publicas, digite as suas na tabela de cargas
+  paleteSeara: { comprimento: 1.20, largura: 1.00, altura: 2.10, capacidadeKg: 1200, margemTopo: 0 },
   paletePbr: { comprimento: 1.20, largura: 1.00, altura: 1.80, capacidadeKg: 1500, margemTopo: 0 },
   paleteEuro: { comprimento: 1.20, largura: 0.80, altura: 1.80, capacidadeKg: 1000, margemTopo: 0 },
   paleteAmericano: { comprimento: 1.219, largura: 1.016, altura: 1.80, capacidadeKg: 1000, margemTopo: 0 },
@@ -99,6 +104,18 @@ function lerCargas() {
 // ---------- cena 3D ----------
 let scene, camera, renderer, controls, grupoCaixas;
 
+// estado do arrastar-com-mouse: guarda cada caixa em coordenadas "modelo"
+// (x,y,z = comprimento/largura/altura, origem no canto, igual ao calculo)
+// junto com seus objetos 3D (mesh + contorno), pra converter de volta pra
+// cena e checar colisao/limites em tempo real
+let veiculoAtual = null;
+let caixasModelo = [];
+let arrastando = null; // { item, offsetX, offsetZ }
+const raycaster = new THREE.Raycaster();
+const mouseNDC = new THREE.Vector2();
+const planoArrasto = new THREE.Plane();
+const COR_COLISAO = 0xe66767;
+
 function initCena() {
   const container = document.getElementById('cena3d');
   scene = new THREE.Scene();
@@ -129,7 +146,82 @@ function initCena() {
     renderer.setSize(container.clientWidth, container.clientHeight);
   });
 
+  configurarArrasto(renderer.domElement);
   animate();
+}
+
+function pintarColisao(item, colidindo) {
+  item.mesh.material.color.set(colidindo ? COR_COLISAO : item.corOriginal);
+}
+
+function configurarArrasto(domElement) {
+  function mousePara(evento) {
+    const rect = domElement.getBoundingClientRect();
+    mouseNDC.x = ((evento.clientX - rect.left) / rect.width) * 2 - 1;
+    mouseNDC.y = -((evento.clientY - rect.top) / rect.height) * 2 + 1;
+  }
+
+  domElement.addEventListener('pointerdown', (evento) => {
+    if (evento.button !== 0) return; // so botao esquerdo - direito/meio ficam livres pra OrbitControls
+    mousePara(evento);
+    raycaster.setFromCamera(mouseNDC, camera);
+    const alvos = caixasModelo.map((i) => i.mesh);
+    const hits = raycaster.intersectObjects(alvos, false);
+    if (hits.length === 0) return;
+
+    const mesh = hits[0].object;
+    const item = mesh.userData.item;
+    const ponto = hits[0].point;
+
+    planoArrasto.set(new THREE.Vector3(0, 1, 0), -mesh.position.y);
+    arrastando = { item, offsetX: mesh.position.x - ponto.x, offsetZ: mesh.position.z - ponto.z };
+    controls.enabled = false;
+    domElement.style.cursor = 'grabbing';
+  });
+
+  domElement.addEventListener('pointermove', (evento) => {
+    if (!arrastando) return;
+    mousePara(evento);
+    raycaster.setFromCamera(mouseNDC, camera);
+    const ponto = new THREE.Vector3();
+    if (!raycaster.ray.intersectPlane(planoArrasto, ponto)) return;
+
+    const { item, offsetX, offsetZ } = arrastando;
+    const novoX = ponto.x + offsetX;
+    const novoZ = ponto.z + offsetZ;
+    item.mesh.position.x = novoX;
+    item.mesh.position.z = novoZ;
+    item.linha.position.x = novoX;
+    item.linha.position.z = novoZ;
+
+    // converte de volta pra coordenadas modelo so pra checar colisao/limites
+    // em tempo real (feedback visual) - a posicao "oficial" so e gravada no solta
+    const cx = veiculoAtual.comprimento / 2;
+    const cz = veiculoAtual.largura / 2;
+    const testeItem = {
+      ...item,
+      x: novoX + cx - item.comprimento / 2,
+      y: novoZ + cz - item.largura / 2,
+    };
+    pintarColisao(item, temColisao(testeItem, caixasModelo.map((i) => (i === item ? testeItem : i))));
+  });
+
+  function soltar() {
+    if (!arrastando) return;
+    const { item } = arrastando;
+    const cx = veiculoAtual.comprimento / 2;
+    const cz = veiculoAtual.largura / 2;
+    item.x = item.mesh.position.x + cx - item.comprimento / 2;
+    item.y = item.mesh.position.z + cz - item.largura / 2;
+    pintarColisao(item, temColisao(item, caixasModelo));
+
+    arrastando = null;
+    controls.enabled = true;
+    domElement.style.cursor = 'auto';
+  }
+
+  domElement.addEventListener('pointerup', soltar);
+  domElement.addEventListener('pointerleave', soltar);
 }
 
 function animate() {
@@ -147,10 +239,40 @@ function limparCena() {
   }
 }
 
+function modeloParaCena(item, veiculo) {
+  const cx = veiculo.comprimento / 2;
+  const cy = veiculo.altura / 2;
+  const cz = veiculo.largura / 2;
+  return {
+    x: item.x + item.comprimento / 2 - cx,
+    y: item.z + item.altura / 2 - cy,
+    z: item.y + item.largura / 2 - cz,
+  };
+}
+
+function sobrepoeModelo(a, b) {
+  return a.x < b.x + b.comprimento && a.x + a.comprimento > b.x
+    && a.y < b.y + b.largura && a.y + a.largura > b.y
+    && a.z < b.z + b.altura && a.z + a.altura > b.z;
+}
+
+// confere se um item (em coordenadas modelo) cabe dentro do veiculo e nao
+// bate em nenhuma outra caixa ja colocada - usado ao soltar o arrasto
+function temColisao(item, todasAsCaixas) {
+  const foraDoVeiculo = item.x < -1e-6 || item.y < -1e-6 || item.z < -1e-6
+    || item.x + item.comprimento > veiculoAtual.comprimento + 1e-6
+    || item.y + item.largura > veiculoAtual.largura + 1e-6
+    || item.z + item.altura > veiculoAtual.altura + 1e-6;
+  if (foraDoVeiculo) return true;
+  return todasAsCaixas.some((outra) => outra !== item && sobrepoeModelo(item, outra));
+}
+
 // desenha o veiculo (wireframe transparente) e cada caixa colocada, todas
 // centralizadas na origem pra camera girar em torno do meio da carga
 function renderizarCena(veiculo, caixas, margemTopo) {
   limparCena();
+  veiculoAtual = veiculo;
+  caixasModelo = [];
 
   const cx = veiculo.comprimento / 2;
   const cy = veiculo.altura / 2; // Y = altura na cena 3D (Z do calculo vira Y aqui)
@@ -197,6 +319,16 @@ function renderizarCena(veiculo, caixas, margemTopo) {
     const linha = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, opacity: 0.3, transparent: true }));
     linha.position.copy(mesh.position);
     grupoCaixas.add(linha);
+
+    // guarda em coordenadas "modelo" (mesmo sistema do calculo) pra dar pra
+    // arrastar depois e checar colisao/limites
+    const item = {
+      x: c.x, y: c.y, z: c.z,
+      comprimento: c.comprimento, largura: c.largura, altura: c.altura,
+      corOriginal: c.cor, mesh, linha,
+    };
+    mesh.userData.item = item;
+    caixasModelo.push(item);
   });
 
   const maiorLado = Math.max(veiculo.comprimento, veiculo.largura, veiculo.altura);
@@ -216,6 +348,9 @@ function corPorPeso(pct) {
   if (pct > 90) return 'var(--status-warning)';
   return 'var(--accent)';
 }
+
+let ultimoVeiculo = null;
+let ultimoResultado = null;
 
 calcularBtn.addEventListener('click', async () => {
   const veiculo = {
@@ -274,10 +409,41 @@ calcularBtn.addEventListener('click', async () => {
     if (!scene) initCena();
     renderizarCena(veiculo, data.caixasColocadas, data.margemTopo);
 
+    ultimoVeiculo = veiculo;
+    ultimoResultado = data;
+    usarComoCargaMsg.textContent = '';
+
     calcularMsg.textContent = `${data.caixasColocadas.length} caixa(s) posicionada(s).`;
   } catch (err) {
     calcularMsg.textContent = `Erro: ${err.message}`;
   } finally {
     calcularBtn.disabled = false;
   }
+});
+
+// pega o resultado do calculo atual (ex: quantas caixas cabem num palete) e
+// adiciona como uma UNICA carga (o "palete carregado") na propria tabela -
+// assim da pra trocar o veiculo pra um conteiner/carreta e calcular de novo
+// pra ver quantos desses paletes cabem, com o palete inteiro aparecendo
+// como um bloco na cena 3D do conteiner
+const usarComoCargaBtn = document.getElementById('usarComoCargaBtn');
+const usarComoCargaMsg = document.getElementById('usarComoCargaMsg');
+
+usarComoCargaBtn.addEventListener('click', () => {
+  if (!ultimoVeiculo || !ultimoResultado || ultimoResultado.caixasColocadas.length === 0) {
+    usarComoCargaMsg.textContent = 'Calcule primeiro pra ter o que usar como carga.';
+    return;
+  }
+
+  const nomeVeiculoAtual = veiculoPreset.options[veiculoPreset.selectedIndex].text;
+  cargasBody.appendChild(linhaCarga({
+    nome: `Palete carregado (${nomeVeiculoAtual})`,
+    comprimento: ultimoVeiculo.comprimento,
+    largura: ultimoVeiculo.largura,
+    altura: ultimoResultado.alturaMaxUsada || ultimoVeiculo.altura,
+    peso: ultimoResultado.pesoUsado,
+    quantidade: 1,
+  }));
+
+  usarComoCargaMsg.textContent = 'Adicionado na tabela de cargas! Troque o "Tipo" pro contêiner/carreta e calcule de novo.';
 });
