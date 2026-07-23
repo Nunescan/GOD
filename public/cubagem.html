@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cubagem - Cesar Augusto</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  #cena3d { width: 100%; height: 460px; border-radius: var(--radius); background: #05070a; border: 1px solid var(--border); }
+  .metric-bar-track { background: var(--surface-2); border-radius: 8px; height: 14px; overflow: hidden; margin-top: 4px; }
+  .metric-bar-fill { height: 100%; transition: width 0.2s ease; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="brand-mark">CA</div>
+    <div class="brand-name">CESAR<span class="thin"> AUGUSTO</span></div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">Início</a>
+    <a class="nav-link" href="dashboard.html">Monitoramento</a>
+    <a class="nav-link" href="mapa.html">Mapa</a>
+    <a class="nav-link" href="navios.html">Navios</a>
+    <a class="nav-link active" href="cubagem.html">Cubagem</a>
+    <a class="nav-link" href="cte.html">CT-e</a>
+    <a class="nav-link" href="cabotagem.html">Cabotagem</a>
+    <a class="nav-link" href="notas.html">Notas</a>
+    <a class="nav-link" href="settings.html">Configurações</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-clock">
+    <div id="clock"></div>
+    <div id="dateLabel"></div>
+  </div>
+  <button class="icon-btn" id="logoutBtn" title="Sair">⏻</button>
+</nav>
+
+<div class="page">
+
+  <div class="card">
+    <div class="section-title">Veículo / equipamento</div>
+    <div class="field-row">
+      <div class="field">
+        <label for="veiculoPreset">Tipo</label>
+        <select id="veiculoPreset">
+          <option value="conteiner20">Contêiner 20ft</option>
+          <option value="conteiner40">Contêiner 40ft</option>
+          <option value="carreta">Carreta Baú</option>
+          <option value="truck">Truck / Toco</option>
+          <option value="manual">Personalizado (ajustar abaixo)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label for="vComprimento">Comprimento (m)</label><input type="number" id="vComprimento" step="0.01" min="0"></div>
+      <div class="field"><label for="vLargura">Largura (m)</label><input type="number" id="vLargura" step="0.01" min="0"></div>
+      <div class="field"><label for="vAltura">Altura (m)</label><input type="number" id="vAltura" step="0.01" min="0"></div>
+      <div class="field"><label for="vCapacidade">Capacidade máxima (kg)</label><input type="number" id="vCapacidade" step="1" min="0"></div>
+    </div>
+    <p class="hint">Valores dos presets são aproximados (medidas internas usuais) - ajuste se você souber o exato do seu equipamento.</p>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Cargas</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Comprimento (m)</th>
+            <th>Largura (m)</th>
+            <th>Altura (m)</th>
+            <th>Peso unit. (kg)</th>
+            <th>Quantidade</th>
+            <th>Cor</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="cargasBody"></tbody>
+      </table>
+    </div>
+    <div class="form-actions" style="margin-top:10px;">
+      <button type="button" class="btn secondary" id="addCargaBtn">+ Adicionar carga</button>
+      <button type="button" class="btn" id="calcularBtn">📐 Calcular cubagem</button>
+      <span class="hint" id="calcularMsg"></span>
+    </div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none;">
+    <div class="section-title">Resultado</div>
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-tile">
+        <div class="value" id="ocupacaoVolumeValor">0%</div>
+        <div class="label">📦 Ocupação volumétrica</div>
+        <div class="metric-bar-track"><div class="metric-bar-fill" id="ocupacaoVolumeBar" style="width:0%; background:var(--accent);"></div></div>
+      </div>
+      <div class="kpi-tile">
+        <div class="value" id="ocupacaoPesoValor">0%</div>
+        <div class="label">⚖️ Ocupação de peso</div>
+        <div class="metric-bar-track"><div class="metric-bar-fill" id="ocupacaoPesoBar" style="width:0%; background:var(--accent);"></div></div>
+      </div>
+    </div>
+    <div class="hint" id="alertaCard" style="display:none; color: var(--status-critical); font-weight:600; margin-bottom:12px;"></div>
+
+    <div id="cena3d"></div>
+    <p class="hint" style="margin-top:8px;">Arraste pra girar, role o mouse pra dar zoom.</p>
+  </div>
+
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script src="js/common.js"></script>
+<script type="module" src="js/cubagem.js"></script>
+</body>
+</html>

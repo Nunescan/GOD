@@ -14,6 +14,7 @@ const cteRoutes = require('./routes/cte');
 const cabotagemRoutes = require('./routes/cabotagem');
 const notasRoutes = require('./routes/notas');
 const naviosRoutes = require('./routes/navios');
+const cubagemRoutes = require('./routes/cubagem');
 const activityLog = require('./services/activityLog');
 const schedule = require('./services/schedule');
 const aisTracker = require('./services/aisTracker');
@@ -165,6 +166,7 @@ app.use('/api/cte', cteRoutes);
 app.use('/api/cabotagem', cabotagemRoutes);
 app.use('/api/notas', notasRoutes);
 app.use('/api/navios', naviosRoutes);
+app.use('/api/cubagem', cubagemRoutes);
 
 // binda so em localhost: este servidor guarda dados internos da empresa e
 // nao deve ficar acessivel por outros dispositivos na mesma rede
