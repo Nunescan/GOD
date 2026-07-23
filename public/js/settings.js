@@ -46,6 +46,42 @@ ravexForm.addEventListener('submit', async (e) => {
   }
 });
 
+// ---------- API key do AIS (rastreamento de navios) ----------
+const aisForm = document.getElementById('aisForm');
+const aisApiKey = document.getElementById('aisApiKey');
+const aisMsg = document.getElementById('aisMsg');
+
+async function loadAisSettings() {
+  try {
+    const data = await fetchJSON('/api/settings/ais-key');
+    aisApiKey.placeholder = data.hasKey
+      ? '•••••••• (deixe em branco pra manter a atual)'
+      : 'Cole aqui a API key do aisstream.io';
+  } catch {
+    // silencioso
+  }
+}
+
+aisForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!aisApiKey.value.trim()) return;
+  aisMsg.textContent = '';
+  aisMsg.classList.remove('error');
+  try {
+    await fetchJSON('/api/settings/ais-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: aisApiKey.value.trim() }),
+    });
+    aisApiKey.value = '';
+    aisMsg.textContent = 'Salvo! Conectando ao rastreamento de navios...';
+    await loadAisSettings();
+  } catch (err) {
+    aisMsg.textContent = err.message;
+    aisMsg.classList.add('error');
+  }
+});
+
 testBtn.addEventListener('click', async () => {
   testBtn.disabled = true;
   testLog.textContent = 'Abrindo o navegador pra você acompanhar...';
@@ -312,6 +348,7 @@ document.getElementById('saveShortcutBtn').addEventListener('click', async () =>
 
 selectIcon('🔗');
 loadRavexSettings();
+loadAisSettings();
 loadColumnMap();
 loadAppPasswordState();
 loadShortcuts();

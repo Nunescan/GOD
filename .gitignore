@@ -10,6 +10,7 @@ config/secrets.json
 config/launcher.json
 config/cabotagemConfig.json
 config/schedule.json
+config/navios.json
 
 # Dados baixados da planilha (tem informacao interna da empresa)
 data/downloads/*

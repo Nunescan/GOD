@@ -37,6 +37,18 @@ function setRavexCredentials(username, password) {
   writeSecrets(s);
 }
 
+// --- chave da API de navios (aisstream.io) ---
+function getAisApiKey() {
+  const s = readSecrets();
+  return s.aisApiKey || process.env.AIS_API_KEY || '';
+}
+
+function setAisApiKey(key) {
+  const s = readSecrets();
+  s.aisApiKey = key;
+  writeSecrets(s);
+}
+
 // --- senha de acesso ao painel ---
 function hashPassword(password, salt) {
   const usedSalt = salt || crypto.randomBytes(16).toString('hex');
@@ -67,6 +79,8 @@ function verifyAppPassword(password) {
 module.exports = {
   getRavexCredentials,
   setRavexCredentials,
+  getAisApiKey,
+  setAisApiKey,
   isAppPasswordConfigured,
   setAppPassword,
   verifyAppPassword,

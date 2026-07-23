@@ -24,6 +24,19 @@ router.post('/ravex', (req, res) => {
   res.json({ ok: true });
 });
 
+router.get('/ais-key', (req, res) => {
+  res.json({ hasKey: Boolean(settings.getAisApiKey()) });
+});
+
+router.post('/ais-key', (req, res) => {
+  const { apiKey } = req.body || {};
+  if (!apiKey) return res.status(400).json({ ok: false, error: 'Informe a API key' });
+  settings.setAisApiKey(apiKey);
+  const aisTracker = require('../services/aisTracker');
+  aisTracker.restart();
+  res.json({ ok: true });
+});
+
 router.post('/app-password', (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
   if (!newPassword || newPassword.length < 4) {

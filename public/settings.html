@@ -17,6 +17,7 @@
     <a class="nav-link" href="index.html">Início</a>
     <a class="nav-link" href="dashboard.html">Monitoramento</a>
     <a class="nav-link" href="mapa.html">Mapa</a>
+    <a class="nav-link" href="navios.html">Navios</a>
     <a class="nav-link" href="cte.html">CT-e</a>
     <a class="nav-link" href="cabotagem.html">Cabotagem</a>
     <a class="nav-link" href="notas.html">Notas</a>
@@ -51,6 +52,26 @@
         <span class="save-msg" id="ravexMsg"></span>
       </div>
       <div class="field"><span class="hint" id="testLog"></span></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Rastreamento de navios (aba Navios)</div>
+    <p class="hint" style="margin:-4px 0 14px;">
+      Usa o <a href="https://aisstream.io" target="_blank" rel="noopener">aisstream.io</a> (gratuito) pra pegar a
+      posição dos navios da sua lista via AIS. Crie uma conta lá (sem cartão) e cole a API key aqui.
+    </p>
+    <form id="aisForm">
+      <div class="field-row">
+        <div class="field">
+          <label for="aisApiKey">API key do aisstream.io</label>
+          <input type="password" id="aisApiKey" autocomplete="off" placeholder="•••••••• (deixe em branco pra manter a atual)">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn">Salvar API key</button>
+        <span class="save-msg" id="aisMsg"></span>
+      </div>
     </form>
   </div>
 

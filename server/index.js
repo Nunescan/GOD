@@ -13,8 +13,10 @@ const settingsRoutes = require('./routes/settings');
 const cteRoutes = require('./routes/cte');
 const cabotagemRoutes = require('./routes/cabotagem');
 const notasRoutes = require('./routes/notas');
+const naviosRoutes = require('./routes/navios');
 const activityLog = require('./services/activityLog');
 const schedule = require('./services/schedule');
+const aisTracker = require('./services/aisTracker');
 const cabotagemDaily = require('./services/cabotagemDaily');
 
 const app = express();
@@ -162,11 +164,14 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/cte', cteRoutes);
 app.use('/api/cabotagem', cabotagemRoutes);
 app.use('/api/notas', notasRoutes);
+app.use('/api/navios', naviosRoutes);
 
 // binda so em localhost: este servidor guarda dados internos da empresa e
 // nao deve ficar acessivel por outros dispositivos na mesma rede
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
+
+  aisTracker.start();
 
   if (AUTO_REFRESH_MINUTES > 0) {
     setInterval(() => {

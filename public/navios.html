@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Navios - Cesar Augusto</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  html, body { height: 100%; }
+  body { display: flex; flex-direction: column; }
+  .map-shell { flex: 1; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="brand-mark">CA</div>
+    <div class="brand-name">CESAR<span class="thin"> AUGUSTO</span></div>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="index.html">Início</a>
+    <a class="nav-link" href="dashboard.html">Monitoramento</a>
+    <a class="nav-link" href="mapa.html">Mapa</a>
+    <a class="nav-link active" href="navios.html">Navios</a>
+    <a class="nav-link" href="cte.html">CT-e</a>
+    <a class="nav-link" href="cabotagem.html">Cabotagem</a>
+    <a class="nav-link" href="notas.html">Notas</a>
+    <a class="nav-link" href="settings.html">Configurações</a>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-clock">
+    <div id="clock"></div>
+    <div id="dateLabel"></div>
+  </div>
+  <button class="icon-btn" id="logoutBtn" title="Sair">⏻</button>
+</nav>
+
+<div class="banner" id="semChaveBanner" style="display:none; padding:10px 24px; background:var(--status-warning-soft); color:var(--status-warning); font-size:13px;">
+  ⚠️ Nenhuma API key do AIS configurada ainda. Vá em <a href="settings.html" style="color:inherit; text-decoration:underline;">Configurações</a> e cole sua chave gratuita do
+  <a href="https://aisstream.io" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">aisstream.io</a> pra ativar o rastreamento.
+</div>
+
+<div class="map-shell">
+  <div id="map"></div>
+
+  <div class="map-panel">
+    <div class="search-box">
+      <span class="search-icon">🔎</span>
+      <input id="searchInput" type="text" placeholder="Buscar por nome do navio ou SPE...">
+    </div>
+    <div class="map-detail" id="detailPanel" style="display:none;"></div>
+    <div class="map-detail" id="listaPanel">
+      <div class="row" style="margin-bottom:8px;"><span class="k">Navios na lista</span><span id="totalNavios">0</span></div>
+      <div id="listaResumo"></div>
+      <button class="btn secondary" id="gerenciarBtn" style="width:100%; margin-top:10px;">📝 Gerenciar lista de navios</button>
+    </div>
+  </div>
+</div>
+
+<!-- modal simples de gerenciamento da lista -->
+<div id="gerenciarModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center;">
+  <div class="card" style="width:min(560px, 92vw); max-height:80vh; overflow-y:auto;">
+    <div class="section-title">Lista de navios acompanhados</div>
+    <p class="hint">Coloque o nome do navio exatamente como ele transmite no AIS (geralmente tudo maiúsculo). A SPE é opcional, só pra você conseguir buscar por ela depois.</p>
+    <div id="listaEditavel"></div>
+    <div class="form-actions" style="margin-top:10px;">
+      <button type="button" class="btn secondary" id="addNavioBtn">+ Adicionar navio</button>
+    </div>
+    <div class="form-actions" style="margin-top:16px;">
+      <button type="button" class="btn" id="salvarListaBtn">Salvar lista</button>
+      <button type="button" class="btn secondary" id="fecharModalBtn">Fechar</button>
+      <span class="save-msg" id="listaMsg"></span>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/common.js"></script>
+<script src="js/navios.js"></script>
+</body>
+</html>
