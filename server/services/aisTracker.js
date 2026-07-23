@@ -19,6 +19,13 @@ let reconnectTimer = null;
 let watchlist = new Set(); // nomes normalizados
 const shipData = {}; // nome normalizado -> { nome, mmsi, lat, lng, ... }
 
+const status = {
+  estado: 'desligado', // desligado | conectando | conectado | erro
+  detalhe: null,
+  mensagensRecebidas: 0,
+  ultimaMensagemEm: null,
+};
+
 function normalizeName(str) {
   return String(str || '')
     .normalize('NFD')
@@ -54,6 +61,18 @@ function handleMessage(raw) {
   try {
     msg = JSON.parse(raw);
   } catch {
+    return;
+  }
+
+  status.mensagensRecebidas += 1;
+  status.ultimaMensagemEm = new Date().toISOString();
+
+  // erro reportado pelo proprio aisstream.io (ex: API key invalida) vem como
+  // uma mensagem normal, nao como "close" - por isso pegamos aqui tambem
+  if (msg.error) {
+    status.estado = 'erro';
+    status.detalhe = msg.error;
+    console.error('[ais] erro reportado pelo aisstream.io:', msg.error);
     return;
   }
 
@@ -104,20 +123,28 @@ function scheduleReconnect() {
 function connect() {
   const apiKey = getAisApiKey();
   if (!apiKey) {
+    status.estado = 'desligado';
+    status.detalhe = 'sem API key configurada';
     console.log('[ais] sem API key configurada (Configurações > Navios) - rastreamento de navios desligado.');
     return;
   }
 
+  status.estado = 'conectando';
+  status.detalhe = null;
+
   try {
     ws = new WebSocket(ENDPOINT);
   } catch (err) {
+    status.estado = 'erro';
+    status.detalhe = err.message;
     console.error('[ais] erro ao abrir conexão:', err.message);
     scheduleReconnect();
     return;
   }
 
   ws.on('open', () => {
-    console.log('[ais] conectado ao aisstream.io, assinando costa do Brasil...');
+    status.estado = 'conectado';
+    console.log(`[ais] conectado ao aisstream.io, assinando costa do Brasil (${watchlist.size} navio(s) na lista)...`);
     ws.send(JSON.stringify({
       APIKey: apiKey,
       BoundingBoxes: BRAZIL_BBOX,
@@ -128,10 +155,15 @@ function connect() {
   ws.on('message', (data) => handleMessage(data.toString()));
 
   ws.on('error', (err) => {
+    status.estado = 'erro';
+    status.detalhe = err.message;
     console.error('[ais] erro na conexão:', err.message);
   });
 
-  ws.on('close', () => {
+  ws.on('close', (code, reason) => {
+    status.estado = 'desligado';
+    status.detalhe = `conexão fechada (código ${code}${reason ? ': ' + reason.toString() : ''})`;
+    console.log(`[ais] conexão fechada - código ${code}${reason ? ': ' + reason.toString() : ''}. Reconectando em ${RECONNECT_MS / 1000}s...`);
     ws = null;
     scheduleReconnect();
   });
@@ -176,4 +208,8 @@ function getShipsWithPositions() {
   });
 }
 
-module.exports = { start, stop, restart, refreshWatchlist, getShipsWithPositions, normalizeName };
+function getStatus() {
+  return { ...status, naviosNaLista: watchlist.size };
+}
+
+module.exports = { start, stop, restart, refreshWatchlist, getShipsWithPositions, getStatus, normalizeName };

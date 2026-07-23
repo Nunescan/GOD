@@ -109,12 +109,31 @@ searchInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') runSearch(searchInput.value.trim());
 });
 
+function renderStatusBanner(status) {
+  if (!status) { semChaveBanner.style.display = 'none'; return; }
+
+  if (status.estado === 'desligado' && status.detalhe === 'sem API key configurada') {
+    semChaveBanner.innerHTML = `⚠️ Nenhuma API key do AIS configurada ainda. Vá em <a href="settings.html">Configurações</a> e cole sua chave gratuita do
+      <a href="https://aisstream.io" target="_blank" rel="noopener">aisstream.io</a> pra ativar o rastreamento.`;
+    semChaveBanner.style.display = 'block';
+  } else if (status.estado === 'erro' || (status.estado === 'desligado' && status.detalhe)) {
+    semChaveBanner.innerHTML = `⚠️ Problema na conexão com o AIS: ${status.detalhe || 'erro desconhecido'}. Tentando de novo sozinho...`;
+    semChaveBanner.style.display = 'block';
+  } else if (status.estado === 'conectando') {
+    semChaveBanner.innerHTML = `⏳ Conectando ao rastreamento de navios...`;
+    semChaveBanner.style.display = 'block';
+  } else {
+    semChaveBanner.style.display = 'none';
+  }
+}
+
 async function loadShips() {
   try {
     const data = await fetchJSON('/api/navios');
     currentShips = data.navios || [];
     renderMarkers(currentShips);
     renderLista(currentShips);
+    renderStatusBanner(data.status);
 
     if (currentShips.some((n) => n.encontrado)) {
       const bounds = L.latLngBounds(currentShips.filter((n) => n.encontrado).map((n) => [n.lat, n.lng]));
@@ -122,15 +141,6 @@ async function loadShips() {
     }
   } catch (err) {
     listaResumoEl.innerHTML = `<div class="empty-state">Erro ao carregar: ${err.message}</div>`;
-  }
-}
-
-async function checkApiKey() {
-  try {
-    const data = await fetchJSON('/api/settings/ais-key');
-    semChaveBanner.style.display = data.hasKey ? 'none' : 'block';
-  } catch {
-    // silencioso - nao trava a pagina por causa disso
   }
 }
 
@@ -148,7 +158,7 @@ function linhaEditavel(nome = '', spe = '') {
   div.className = 'field-row';
   div.style.marginBottom = '8px';
   div.innerHTML = `
-    <div class="field"><input type="text" class="navio-nome" placeholder="Nome do navio (como no AIS)" value="${nome}"></div>
+    <div class="field"><input type="text" class="navio-nome" placeholder="Nome do navio, ex: MSC AMBITION (não é IMO nem MMSI)" value="${nome}"></div>
     <div class="field" style="max-width:140px;"><input type="text" class="navio-spe" placeholder="SPE (opcional)" value="${spe}"></div>
     <button type="button" class="icon-btn remover-navio" title="Remover">🗑️</button>
   `;
@@ -173,6 +183,16 @@ salvarListaBtn.addEventListener('click', async () => {
     spe: row.querySelector('.navio-spe').value.trim(),
   })).filter((n) => n.nome);
 
+  const pareceCodigo = navios.find((n) => /^\d+$/.test(n.nome));
+  if (pareceCodigo) {
+    const seguir = confirm(
+      `"${pareceCodigo.nome}" parece um número IMO ou MMSI, não um nome de navio. ` +
+      `O rastreamento busca pelo NOME que o navio transmite no AIS - com só o número não vai encontrar. ` +
+      `Quer salvar assim mesmo?`
+    );
+    if (!seguir) return;
+  }
+
   salvarListaBtn.disabled = true;
   try {
     await fetchJSON('/api/navios/lista', {
@@ -190,6 +210,5 @@ salvarListaBtn.addEventListener('click', async () => {
   }
 });
 
-checkApiKey();
 loadShips();
 setInterval(loadShips, AUTO_REFRESH_MS);

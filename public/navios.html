@@ -63,7 +63,13 @@
 <div id="gerenciarModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center;">
   <div class="card" style="width:min(560px, 92vw); max-height:80vh; overflow-y:auto;">
     <div class="section-title">Lista de navios acompanhados</div>
-    <p class="hint">Coloque o nome do navio exatamente como ele transmite no AIS (geralmente tudo maiúsculo). A SPE é opcional, só pra você conseguir buscar por ela depois.</p>
+    <p class="hint">
+      Coloque o <b>nome do navio</b> (não o número IMO nem o MMSI) exatamente como ele transmite no AIS -
+      geralmente tudo maiúsculo e sem acento, ex: <code>MSC AMBITION</code>. Se você só tem o número IMO,
+      procure ele num site como <a href="https://www.marinetraffic.com" target="_blank" rel="noopener">MarineTraffic</a>
+      ou <a href="https://www.vesselfinder.com" target="_blank" rel="noopener">VesselFinder</a> pra achar o nome certo.
+      A SPE é opcional, só pra você conseguir buscar por ela depois.
+    </p>
     <div id="listaEditavel"></div>
     <div class="form-actions" style="margin-top:10px;">
       <button type="button" class="btn secondary" id="addNavioBtn">+ Adicionar navio</button>
