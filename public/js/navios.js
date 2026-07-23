@@ -9,6 +9,7 @@ const listaPanel = document.getElementById('listaPanel');
 const totalNaviosEl = document.getElementById('totalNavios');
 const listaResumoEl = document.getElementById('listaResumo');
 const semChaveBanner = document.getElementById('semChaveBanner');
+const somenteListaToggle = document.getElementById('somenteListaToggle');
 
 const map = L.map('map', { zoomControl: true }).setView(BRAZIL_CENTER, 4);
 
@@ -20,16 +21,18 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
 
 const markersLayer = L.layerGroup().addTo(map);
 
-let currentShips = [];
+let currentShips = []; // todos os navios com posicao (naLista/spe vem marcado em cada um)
+let currentLista = []; // sua lista cadastrada, com posicao quando encontrada
 
-function shipIcon() {
+function shipIcon(naLista) {
+  const cor = naLista ? 'var(--brand-gold)' : 'var(--accent)';
   return L.divIcon({
     className: '',
-    html: `<div style="width:34px;height:34px;border-radius:50%;background:var(--surface-1);
-      border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;
-      font-size:16px;box-shadow:0 2px 6px rgba(0,0,0,.6);">🚢</div>`,
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
+    html: `<div style="width:${naLista ? 36 : 28}px;height:${naLista ? 36 : 28}px;border-radius:50%;background:var(--surface-1);
+      border:2px solid ${cor};display:flex;align-items:center;justify-content:center;
+      font-size:${naLista ? 17 : 13}px;box-shadow:0 2px 6px rgba(0,0,0,.6);">🚢</div>`,
+    iconSize: [naLista ? 36 : 28, naLista ? 36 : 28],
+    iconAnchor: [naLista ? 18 : 14, naLista ? 18 : 14],
   });
 }
 
@@ -39,13 +42,15 @@ function formatVelocidade(nos) {
 }
 
 function detailHtml(n) {
+  const temPosicao = typeof n.lat === 'number';
   return `
     <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 style="margin:0;">${n.nome}</h3>
+      <h3 style="margin:0;">${n.nome || 'Sem nome'}</h3>
       <button class="icon-btn" id="clearSelectionBtn" title="Fechar">✕</button>
     </div>
     ${n.spe ? `<div class="row"><span class="k">SPE</span><span>${n.spe}</span></div>` : ''}
-    ${n.encontrado ? `
+    ${n.naLista ? `<div class="row"><span class="k">Na sua lista?</span><span>✅ Sim</span></div>` : ''}
+    ${temPosicao ? `
       <div class="row"><span class="k">Posição</span><span>${n.lat.toFixed(4)}, ${n.lng.toFixed(4)}</span></div>
       <div class="row"><span class="k">Velocidade</span><span>${formatVelocidade(n.velocidadeNos)}</span></div>
       <div class="row"><span class="k">Rumo</span><span>${n.rumo !== undefined && n.rumo !== null ? n.rumo + '°' : '-'}</span></div>
@@ -61,37 +66,43 @@ function selectShip(n) {
   detailPanel.style.display = 'block';
   detailPanel.innerHTML = detailHtml(n);
   document.getElementById('clearSelectionBtn').addEventListener('click', clearSelection);
-  if (n.encontrado) map.flyTo([n.lat, n.lng], 7);
+  if (typeof n.lat === 'number') map.flyTo([n.lat, n.lng], 7);
 }
 
 function clearSelection() {
   detailPanel.style.display = 'none';
 }
 
-function renderMarkers(ships) {
+function shipsVisiveis() {
+  return somenteListaToggle.checked ? currentShips.filter((n) => n.naLista) : currentShips;
+}
+
+function renderMarkers() {
   markersLayer.clearLayers();
-  ships.filter((n) => n.encontrado).forEach((n) => {
-    const marker = L.marker([n.lat, n.lng], { icon: shipIcon() });
-    marker.bindPopup(`<b>${n.nome}</b><br>${n.spe ? 'SPE: ' + n.spe + '<br>' : ''}${formatVelocidade(n.velocidadeNos)}`);
+  shipsVisiveis().forEach((n) => {
+    const marker = L.marker([n.lat, n.lng], { icon: shipIcon(n.naLista) });
+    marker.bindPopup(`<b>${n.nome || 'Sem nome'}</b><br>${n.spe ? 'SPE: ' + n.spe + '<br>' : ''}${formatVelocidade(n.velocidadeNos)}`);
     marker.on('click', () => selectShip(n));
     markersLayer.addLayer(marker);
   });
 }
 
-function renderLista(ships) {
-  totalNaviosEl.textContent = ships.length;
-  const encontrados = ships.filter((n) => n.encontrado).length;
+function renderLista() {
+  const visiveis = shipsVisiveis();
+  totalNaviosEl.textContent = visiveis.length;
+  const encontrados = currentLista.filter((n) => n.encontrado).length;
   listaResumoEl.innerHTML = `
-    <div class="row"><span class="k">Com posição agora</span><span>${encontrados}</span></div>
-    <div class="row"><span class="k">Aguardando sinal</span><span>${ships.length - encontrados}</span></div>
+    <div class="row"><span class="k">Navios na sua lista</span><span>${currentLista.length}</span></div>
+    <div class="row"><span class="k">Da lista com posição agora</span><span>${encontrados}</span></div>
+    <div class="row"><span class="k">Total avistados na costa</span><span>${currentShips.length}</span></div>
   `;
 }
 
 function findByQuery(q) {
   const nq = normalizeText(q);
-  return currentShips.find((n) => normalizeText(n.spe) === nq)
+  return currentShips.find((n) => n.spe && normalizeText(n.spe) === nq)
     || currentShips.find((n) => normalizeText(n.nome).includes(nq))
-    || currentShips.find((n) => normalizeText(n.spe).includes(nq));
+    || currentShips.find((n) => n.spe && normalizeText(n.spe).includes(nq));
 }
 
 function runSearch(q) {
@@ -101,7 +112,7 @@ function runSearch(q) {
     selectShip(found);
   } else {
     detailPanel.style.display = 'block';
-    detailPanel.innerHTML = `<div class="empty-state">Nenhum navio na lista bate com "${q}"</div>`;
+    detailPanel.innerHTML = `<div class="empty-state">Nenhum navio avistado bate com "${q}"</div>`;
   }
 }
 
@@ -127,22 +138,32 @@ function renderStatusBanner(status) {
   }
 }
 
+let primeiroCarregamento = true;
+
 async function loadShips() {
   try {
     const data = await fetchJSON('/api/navios');
     currentShips = data.navios || [];
-    renderMarkers(currentShips);
-    renderLista(currentShips);
+    currentLista = data.lista || [];
+    renderMarkers();
+    renderLista();
     renderStatusBanner(data.status);
 
-    if (currentShips.some((n) => n.encontrado)) {
-      const bounds = L.latLngBounds(currentShips.filter((n) => n.encontrado).map((n) => [n.lat, n.lng]));
+    const visiveis = shipsVisiveis();
+    if (primeiroCarregamento && visiveis.length > 0) {
+      const bounds = L.latLngBounds(visiveis.map((n) => [n.lat, n.lng]));
       map.fitBounds(bounds.pad(0.3));
+      primeiroCarregamento = false;
     }
   } catch (err) {
     listaResumoEl.innerHTML = `<div class="empty-state">Erro ao carregar: ${err.message}</div>`;
   }
 }
+
+somenteListaToggle.addEventListener('change', () => {
+  renderMarkers();
+  renderLista();
+});
 
 // --- modal de gerenciamento da lista ---
 const gerenciarModal = document.getElementById('gerenciarModal');
@@ -168,7 +189,7 @@ function linhaEditavel(nome = '', spe = '') {
 
 function abrirModal() {
   listaEditavel.innerHTML = '';
-  const lista = currentShips.length > 0 ? currentShips : [{ nome: '', spe: '' }];
+  const lista = currentLista.length > 0 ? currentLista : [{ nome: '', spe: '' }];
   lista.forEach((n) => listaEditavel.appendChild(linhaEditavel(n.nome, n.spe)));
   gerenciarModal.style.display = 'flex';
 }

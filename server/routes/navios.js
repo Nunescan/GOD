@@ -7,7 +7,11 @@ const router = express.Router();
 const NAVIOS_FILE = path.resolve(__dirname, '../../config/navios.json');
 
 router.get('/', (req, res) => {
-  res.json({ navios: aisTracker.getShipsWithPositions(), status: aisTracker.getStatus() });
+  res.json({
+    navios: aisTracker.getAllShips(),
+    lista: aisTracker.getWatchlistWithPositions(),
+    status: aisTracker.getStatus(),
+  });
 });
 
 router.get('/status', (req, res) => {
@@ -25,7 +29,7 @@ router.post('/lista', (req, res) => {
   fs.mkdirSync(path.dirname(NAVIOS_FILE), { recursive: true });
   fs.writeFileSync(NAVIOS_FILE, JSON.stringify(limpa, null, 2));
   aisTracker.refreshWatchlist();
-  res.json({ ok: true, navios: aisTracker.getShipsWithPositions() });
+  res.json({ ok: true, lista: aisTracker.getWatchlistWithPositions() });
 });
 
 module.exports = router;

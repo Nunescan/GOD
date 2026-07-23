@@ -52,7 +52,11 @@
     </div>
     <div class="map-detail" id="detailPanel" style="display:none;"></div>
     <div class="map-detail" id="listaPanel">
-      <div class="row" style="margin-bottom:8px;"><span class="k">Navios na lista</span><span id="totalNavios">0</span></div>
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:10px;">
+        <input type="checkbox" id="somenteListaToggle">
+        <span>Mostrar só os navios da minha lista</span>
+      </label>
+      <div class="row" style="margin-bottom:8px;"><span class="k">Navios no mapa agora</span><span id="totalNavios">0</span></div>
       <div id="listaResumo"></div>
       <button class="btn secondary" id="gerenciarBtn" style="width:100%; margin-top:10px;">📝 Gerenciar lista de navios</button>
     </div>
